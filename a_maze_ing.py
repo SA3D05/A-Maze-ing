@@ -1,6 +1,8 @@
 import curses
+import time
 
 from curses import wrapper
+import sys
 
 
 class Cell:
@@ -87,8 +89,48 @@ def gen_maze(scr: curses.window, xmax: int, ymax: int):
                 scr.addch(y, x, TILES["horizontal"])
 
 
-WIDTH = 3
-HEIGHT = 3
+WIDTH = int(sys.argv[1])
+HEIGHT = int(sys.argv[2])
+
+
+class Element:
+    def __init__(self, y, x, sprite):
+        self.y = y
+        self.x = x
+        self.sprite = sprite
+
+
+elements: list[Element] = []
+
+for column in range(HEIGHT * 2 + 1):
+    for row in range(WIDTH * 2 + 1):
+
+        if column == 0 and row == 0:
+            elements.append(Element(column, row, TILES["left-top"]))
+        elif column == 0 and row == WIDTH * 2:
+            elements.append(Element(column, row, TILES["right-top"]))
+        elif column == HEIGHT * 2 and row == 0:
+            elements.append(Element(column, row, TILES["left-bottom"]))
+        elif column == HEIGHT * 2 and row == WIDTH * 2:
+            elements.append(Element(column, row, TILES["right-bottom"]))
+
+        elif not row % 2 and column == 0:
+            elements.append(Element(column, row, TILES["t-down"]))
+        elif not row % 2 and column == HEIGHT * 2:
+            elements.append(Element(column, row, TILES["t-up"]))
+        elif not column % 2:
+            if row == 0:
+                elements.append(Element(column, row, TILES["t-right"]))
+            elif row == WIDTH * 2:
+                elements.append(Element(column, row, TILES["t-left"]))
+            elif not row % 2:
+                elements.append(Element(column, row, TILES["center"]))
+            else:
+                elements.append(Element(column, row, TILES["horizontal"]))
+        elif column % 2 and not row % 2:
+            elements.append(Element(column, row, TILES["vertical"]))
+        else:
+            elements.append(Element(column, row, " "))
 
 
 def get_pos(pos) -> int:
@@ -105,34 +147,56 @@ def get_cell(x, y):
 
 
 def main(scr: curses.window) -> None:
-    xmax = WIDTH - 1
-    ymax = HEIGHT - 1
     curses.curs_set(0)
     scr.clear()
     scr.refresh()
-    for cell in maze:
-        if not cell.up:
-            scr.addch(get_pos(cell.y) - 1, get_pos(cell.x), TILES["horizontal"])
+    for element in elements:
+        scr.addch(element.y, element.x, element.sprite)
 
-        if not cell.down:
-            scr.addch(get_pos(cell.y) + 1, get_pos(cell.x), TILES["horizontal"])
+        for cell in maze:
+            # left corner
 
-        if not cell.left:
-            scr.addch(get_pos(cell.y), get_pos(cell.x) - 1, TILES["vertical"])
+            for element in elements:
+                if element.x == get_pos(cell.x) - 1:
+                    if element.y == get_pos(cell.y) - 1:
+                        if element.sprite == TILES["center"]:
+                            scr.addch(
+                                get_pos(cell.y) - 1,
+                                get_pos(cell.x) - 1,
+                                " ",
+                            )
+                        if element.sprite == TILES["t-right"]:
+                            scr.addch(
+                                get_pos(cell.y) - 1,
+                                get_pos(cell.x) - 1,
+                                TILES["vertical"],
+                            )
 
-        if not cell.right:
-            scr.addch(get_pos(cell.y), get_pos(cell.x) + 1, TILES["vertical"])
-    for cell in maze:
-        if cell.x == 0 and cell.y == 0:
-            scr.addch(get_pos(cell.y) - 1, get_pos(cell.x) - 1, TILES["left-top"])
-        if cell.x == xmax and cell.y == 0:
-            scr.addch(get_pos(cell.y) - 1, get_pos(cell.x) + 1, TILES["right-top"])
-        if cell.x == 0 and cell.y == ymax:
-            scr.addch(get_pos(cell.y) + 1, get_pos(cell.x) - 1, TILES["left-bottom"])
-        if cell.x == xmax and cell.y == ymax:
-            scr.addch(get_pos(cell.y) + 1, get_pos(cell.x) + 1, TILES["right-bottom"])
+                # right corner
+
+            if cell.down:
+                scr.addch(get_pos(cell.y) + 1, get_pos(cell.x), " ")
+
+            if cell.left:
+                scr.addch(get_pos(cell.y), get_pos(cell.x) - 1, " ")
+
+            if cell.right:
+                scr.addch(get_pos(cell.y), get_pos(cell.x) + 1, " ")
+
+    # for cell in maze:
+    #     if cell.x == 0 and cell.y == 0:
+    #         scr.addch(get_pos(cell.y) - 1, get_pos(cell.x) - 1, TILES["left-top"])
+    #     if cell.x == xmax and cell.y == 0:
+    #         scr.addch(get_pos(cell.y) - 1, get_pos(cell.x) + 1, TILES["right-top"])
+    #     if cell.x == 0 and cell.y == ymax:
+    #         scr.addch(get_pos(cell.y) + 1, get_pos(cell.x) - 1, TILES["left-bottom"])
+    #     if cell.x == xmax and cell.y == ymax:
+    #         scr.addch(get_pos(cell.y) + 1, get_pos(cell.x) + 1, TILES["right-bottom"])
+
     scr.refresh()
-    scr.getch()
+    # scr.getch()
+    while True:
+        time.sleep(10)
 
 
 wrapper(main)
