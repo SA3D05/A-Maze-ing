@@ -151,37 +151,87 @@ def main(scr: curses.window) -> None:
     scr.clear()
     scr.refresh()
     for element in elements:
+        time.sleep(0.03)
         scr.addch(element.y, element.x, element.sprite)
+        scr.refresh()
+    for cell in maze:
+        for element in elements:
+            # left up
 
-        for cell in maze:
-            # left corner
+            # if (
+            #     element.x == get_pos(cell.x) - 1
+            #     and element.y == get_pos(cell.y) - 1
+            # ):
+            #     element.sprite = " "
+            # if cell.up:
+            #     if element.sprite == TILES["center"]:
+            #         element.sprite = TILES["t-left"]
+            #     elif element.sprite == TILES["t-left"]:
+            #         element.sprite = TILES["right-bottom"]
+            # if element.sprite == TILES["t-right"]:
+            #     scr.addch(
+            #         get_pos(cell.y) - 1,
+            #         get_pos(cell.x) - 1,
+            #         TILES["vertical"],
+            #     )
+            # up
+            if element.x == get_pos(cell.x) and element.y == get_pos(cell.y) - 1:
+                if cell.up:
+                    element.sprite = " "
+            # right up
+            # if (
+            #     element.x == get_pos(cell.x) + 1
+            #     and element.y == get_pos(cell.y) - 1
+            # ):
+            #     if element.sprite == TILES["t-left"]:
+            #         element.sprite = TILES["vertical"]
+            # right
+            if element.x == get_pos(cell.x) + 1 and element.y == get_pos(cell.y):
+                if cell.right:
+                    element.sprite = " "
 
-            for element in elements:
-                if element.x == get_pos(cell.x) - 1:
-                    if element.y == get_pos(cell.y) - 1:
-                        if element.sprite == TILES["center"]:
-                            scr.addch(
-                                get_pos(cell.y) - 1,
-                                get_pos(cell.x) - 1,
-                                " ",
-                            )
-                        if element.sprite == TILES["t-right"]:
-                            scr.addch(
-                                get_pos(cell.y) - 1,
-                                get_pos(cell.x) - 1,
-                                TILES["vertical"],
-                            )
+            # right down
 
-                # right corner
+            # down
+            if element.x == get_pos(cell.x) and element.y == get_pos(cell.y) + 1:
+                if cell.down:
+                    element.sprite = " "
 
-            if cell.down:
-                scr.addch(get_pos(cell.y) + 1, get_pos(cell.x), " ")
+            # left down
 
-            if cell.left:
-                scr.addch(get_pos(cell.y), get_pos(cell.x) - 1, " ")
+            # left
+            if element.x == get_pos(cell.x) - 1 and element.y == get_pos(cell.y):
+                if cell.left:
+                    # if cell.left:
+                    #     if element.sprite == TILES["vertical"]:
+                    #         element.sprite = " "
+                    element.sprite = " "
 
-            if cell.right:
-                scr.addch(get_pos(cell.y), get_pos(cell.x) + 1, " ")
+            # left down
+            # if (
+            #     element.x == get_pos(cell.x) - 1
+            #     and element.y == get_pos(cell.y) + 1
+            # ):
+            #     if cell.left:
+            #         if element.sprite == TILES["t-up"]:
+            #             element.sprite = TILES["horizontal"]
+            #         elif element.sprite == TILES["t-left"]:
+            #             element.sprite = TILES["right-bottom"]
+
+        # right corner
+
+    # if cell.down:
+    #     scr.addch(get_pos(cell.y) + 1, get_pos(cell.x), " ")
+
+    # if cell.left:
+    #     scr.addch(get_pos(cell.y), get_pos(cell.x) - 1, " ")
+
+    # if cell.right:
+    #     scr.addch(get_pos(cell.y), get_pos(cell.x) + 1, " ")
+
+    for element in elements:
+        # time.sleep(0.1)
+        scr.addch(element.y, element.x, element.sprite)
 
     # for cell in maze:
     #     if cell.x == 0 and cell.y == 0:
