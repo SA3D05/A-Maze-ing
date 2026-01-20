@@ -3,101 +3,57 @@ import time
 
 from curses import wrapper
 import sys
-
-
-class Cell:
-    def __init__(
-        self, y: int, x: int, up: bool, down: bool, left: bool, right: bool
-    ) -> None:
-        self.y = y
-        self.x = x
-        self.up = up
-        self.down = down
-        self.left = left
-        self.right = right
-
-
-TILES = {
-    "vertical": "┃",
-    "horizontal": "━",
-    "left-top": "┏",
-    "right-top": "┓",
-    "left-bottom": "┗",
-    "right-bottom": "┛",
-    "center": "╋",
-    "t-down": "┳",
-    "t-up": "┻",
-    "t-right": "┣",
-    "t-left": "┫",
-}
-
-
-maze: list[Cell] = [
-    Cell(0, 0, False, True, False, False),
-    Cell(0, 1, False, True, False, True),
-    Cell(0, 2, False, True, True, False),
-    Cell(1, 0, True, False, False, True),
-    Cell(1, 1, True, True, True, False),
-    Cell(1, 2, True, False, False, False),
-    Cell(2, 0, False, False, False, True),
-    Cell(2, 1, True, False, True, True),
-    Cell(2, 2, False, False, True, False),
-]
+from cells_place_holder import maze
+from model import Cell, Element
+from tiles import Tile
 
 
 def gen_maze(scr: curses.window, xmax: int, ymax: int):
     for y in range(HEIGHT * 2 + 1):
         for x in range(WIDTH * 2 + 1):
             if x == 0 and y == 0:
-                scr.addch(y, x, TILES["left-top"])
+                scr.addch(y, x, Tile.LEFT_TOP.value)
             elif x == xmax and y == 0:
-                scr.addch(y, x, TILES["right-top"])
+                scr.addch(y, x, Tile.RIGHT_TOP.value)
             elif x == 0 and y == ymax:
-                scr.addch(y, x, TILES["left-bottom"])
+                scr.addch(y, x, Tile.LEFT_BOTTOM.value)
             elif x == xmax and y == ymax:
-                scr.addch(y, x, TILES["right-bottom"])
+                scr.addch(y, x, Tile.RIGHT_BOTTOM.value)
 
             elif y == 0:
                 if x % 2 == 0:
-                    scr.addch(y, x, TILES["t-down"])
+                    scr.addch(y, x, Tile.T_DOWN.value)
                 else:
-                    scr.addch(y, x, TILES["horizontal"])
+                    scr.addch(y, x, Tile.HORIZONTAL.value)
             elif y == ymax:
                 if x % 2 == 0:
-                    scr.addch(y, x, TILES["t-up"])
+                    scr.addch(y, x, Tile.T_UP.value)
                 else:
-                    scr.addch(y, x, TILES["horizontal"])
+                    scr.addch(y, x, Tile.HORIZONTAL.value)
 
             elif x == 0:
                 if y % 2 == 0:
-                    scr.addch(y, x, TILES["t-right"])
+                    scr.addch(y, x, Tile.T_RIGHT.value)
                 else:
-                    scr.addch(y, x, TILES["vertical"])
+                    scr.addch(y, x, Tile.VERTICAL.value)
 
             elif x == xmax:
                 if y % 2 == 0:
-                    scr.addch(y, x, TILES["t-left"])
+                    scr.addch(y, x, Tile.T_LEFT.value)
                 else:
-                    scr.addch(y, x, TILES["vertical"])
+                    scr.addch(y, x, Tile.VERTICAL.value)
 
             elif x % 2 == 0:
                 if y % 2 == 0:
-                    scr.addch(y, x, TILES["center"])
+                    scr.addch(y, x, Tile.CENTER.value)
                 else:
-                    scr.addch(y, x, TILES["vertical"])
+                    scr.addch(y, x, Tile.VERTICAL.value)
             elif y % 2 == 0:
-                scr.addch(y, x, TILES["horizontal"])
+                scr.addch(y, x, Tile.HORIZONTAL.value)
 
 
 WIDTH = int(sys.argv[1])
 HEIGHT = int(sys.argv[2])
-
-
-class Element:
-    def __init__(self, y, x, sprite):
-        self.y = y
-        self.x = x
-        self.sprite = sprite
 
 
 elements: list[Element] = []
@@ -106,29 +62,29 @@ for column in range(HEIGHT * 2 + 1):
     for row in range(WIDTH * 2 + 1):
 
         if column == 0 and row == 0:
-            elements.append(Element(column, row, TILES["left-top"]))
+            elements.append(Element(column, row, Tile.LEFT_TOP.value))
         elif column == 0 and row == WIDTH * 2:
-            elements.append(Element(column, row, TILES["right-top"]))
+            elements.append(Element(column, row, Tile.RIGHT_TOP.value))
         elif column == HEIGHT * 2 and row == 0:
-            elements.append(Element(column, row, TILES["left-bottom"]))
+            elements.append(Element(column, row, Tile.LEFT_BOTTOM.value))
         elif column == HEIGHT * 2 and row == WIDTH * 2:
-            elements.append(Element(column, row, TILES["right-bottom"]))
+            elements.append(Element(column, row, Tile.RIGHT_BOTTOM.value))
 
         elif not row % 2 and column == 0:
-            elements.append(Element(column, row, TILES["t-down"]))
+            elements.append(Element(column, row, Tile.T_DOWN.value))
         elif not row % 2 and column == HEIGHT * 2:
-            elements.append(Element(column, row, TILES["t-up"]))
+            elements.append(Element(column, row, Tile.T_UP.value))
         elif not column % 2:
             if row == 0:
-                elements.append(Element(column, row, TILES["t-right"]))
+                elements.append(Element(column, row, Tile.T_RIGHT.value))
             elif row == WIDTH * 2:
-                elements.append(Element(column, row, TILES["t-left"]))
+                elements.append(Element(column, row, Tile.T_LEFT.value))
             elif not row % 2:
-                elements.append(Element(column, row, TILES["center"]))
+                elements.append(Element(column, row, Tile.CENTER.value))
             else:
-                elements.append(Element(column, row, TILES["horizontal"]))
+                elements.append(Element(column, row, Tile.HORIZONTAL.value))
         elif column % 2 and not row % 2:
-            elements.append(Element(column, row, TILES["vertical"]))
+            elements.append(Element(column, row, Tile.VERTICAL.value))
         else:
             elements.append(Element(column, row, " "))
 
@@ -146,107 +102,114 @@ def get_cell(x, y):
     return None
 
 
+def get_up_element(element: Element):
+    for el in elements:
+        if el.x == element.x and el.y == element.y - 1:
+            return el.sprite
+    return None
+
+
+def get_down_element(element: Element):
+    for el in elements:
+        if el.x == element.x and el.y == element.y + 1:
+            return el.sprite
+    return None
+
+
+def get_left_element(element: Element):
+    for el in elements:
+        if el.x == element.x - 1 and el.y == element.y:
+            return el.sprite
+    return None
+
+
+def get_right_element(element: Element):
+    for el in elements:
+        if el.x == element.x + 1 and el.y == element.y:
+            return el.sprite
+    return None
+
+
+def handel_center(element: Element):
+    up = 1 if get_up_element(element) != " " else 0
+    down = 2 if get_down_element(element) != " " else 0
+    left = 4 if get_left_element(element) != " " else 0
+    right = 8 if get_right_element(element) != " " else 0
+
+    score = up + down + left + right
+
+    BIT_MAP = {
+        1: Tile.SHORT_UP.value,
+        2: Tile.SHORT_DOWN.value,
+        3: Tile.VERTICAL.value,
+        4: Tile.SHORT_LEFT.value,
+        5: Tile.RIGHT_BOTTOM.value,
+        6: Tile.RIGHT_TOP.value,
+        7: Tile.T_LEFT.value,
+        8: Tile.SHORT_RIGHT.value,
+        9: Tile.LEFT_BOTTOM.value,
+        10: Tile.LEFT_TOP.value,
+        11: Tile.T_RIGHT.value,
+        12: Tile.HORIZONTAL.value,
+        13: Tile.T_UP.value,
+        14: Tile.T_DOWN.value,
+        15: Tile.CENTER.value,
+    }
+
+    element.sprite = BIT_MAP.get(score, " ")
+
+
 def main(scr: curses.window) -> None:
     curses.curs_set(0)
     scr.clear()
     scr.refresh()
     for element in elements:
-        time.sleep(0.03)
         scr.addch(element.y, element.x, element.sprite)
         scr.refresh()
+
     for cell in maze:
         for element in elements:
-            # left up
 
-            # if (
-            #     element.x == get_pos(cell.x) - 1
-            #     and element.y == get_pos(cell.y) - 1
-            # ):
-            #     element.sprite = " "
-            # if cell.up:
-            #     if element.sprite == TILES["center"]:
-            #         element.sprite = TILES["t-left"]
-            #     elif element.sprite == TILES["t-left"]:
-            #         element.sprite = TILES["right-bottom"]
-            # if element.sprite == TILES["t-right"]:
-            #     scr.addch(
-            #         get_pos(cell.y) - 1,
-            #         get_pos(cell.x) - 1,
-            #         TILES["vertical"],
-            #     )
-            # up
             if element.x == get_pos(cell.x) and element.y == get_pos(cell.y) - 1:
                 if cell.up:
                     element.sprite = " "
-            # right up
-            # if (
-            #     element.x == get_pos(cell.x) + 1
-            #     and element.y == get_pos(cell.y) - 1
-            # ):
-            #     if element.sprite == TILES["t-left"]:
-            #         element.sprite = TILES["vertical"]
-            # right
+
             if element.x == get_pos(cell.x) + 1 and element.y == get_pos(cell.y):
                 if cell.right:
                     element.sprite = " "
 
-            # right down
-
-            # down
             if element.x == get_pos(cell.x) and element.y == get_pos(cell.y) + 1:
                 if cell.down:
                     element.sprite = " "
 
-            # left down
-
-            # left
             if element.x == get_pos(cell.x) - 1 and element.y == get_pos(cell.y):
                 if cell.left:
-                    # if cell.left:
-                    #     if element.sprite == TILES["vertical"]:
-                    #         element.sprite = " "
                     element.sprite = " "
 
-            # left down
-            # if (
-            #     element.x == get_pos(cell.x) - 1
-            #     and element.y == get_pos(cell.y) + 1
-            # ):
-            #     if cell.left:
-            #         if element.sprite == TILES["t-up"]:
-            #             element.sprite = TILES["horizontal"]
-            #         elif element.sprite == TILES["t-left"]:
-            #             element.sprite = TILES["right-bottom"]
+    for element in elements:
+        if element.sprite == Tile.CENTER.value:
+            handel_center(element)
+        elif element.sprite == Tile.T_DOWN.value:
+            if get_down_element(element) == " ":
+                element.sprite = Tile.HORIZONTAL.value
 
-        # right corner
+        elif element.sprite == Tile.T_UP.value:
+            if get_up_element(element) == " ":
+                element.sprite = Tile.HORIZONTAL.value
 
-    # if cell.down:
-    #     scr.addch(get_pos(cell.y) + 1, get_pos(cell.x), " ")
+        elif element.sprite == Tile.T_LEFT.value:
+            if get_left_element(element) == " ":
+                element.sprite = Tile.VERTICAL.value
 
-    # if cell.left:
-    #     scr.addch(get_pos(cell.y), get_pos(cell.x) - 1, " ")
-
-    # if cell.right:
-    #     scr.addch(get_pos(cell.y), get_pos(cell.x) + 1, " ")
+        elif element.sprite == Tile.T_RIGHT.value:
+            if get_right_element(element) == " ":
+                element.sprite = Tile.VERTICAL.value
 
     for element in elements:
-        # time.sleep(0.1)
         scr.addch(element.y, element.x, element.sprite)
-
-    # for cell in maze:
-    #     if cell.x == 0 and cell.y == 0:
-    #         scr.addch(get_pos(cell.y) - 1, get_pos(cell.x) - 1, TILES["left-top"])
-    #     if cell.x == xmax and cell.y == 0:
-    #         scr.addch(get_pos(cell.y) - 1, get_pos(cell.x) + 1, TILES["right-top"])
-    #     if cell.x == 0 and cell.y == ymax:
-    #         scr.addch(get_pos(cell.y) + 1, get_pos(cell.x) - 1, TILES["left-bottom"])
-    #     if cell.x == xmax and cell.y == ymax:
-    #         scr.addch(get_pos(cell.y) + 1, get_pos(cell.x) + 1, TILES["right-bottom"])
-
     scr.refresh()
     # scr.getch()
-    while True:
-        time.sleep(10)
+    time.sleep(1000)
 
 
 wrapper(main)
