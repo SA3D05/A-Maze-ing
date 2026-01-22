@@ -1,7 +1,7 @@
 from model import Cell
 
 
-maze: list[Cell] = [
+cells_maze_10: list[Cell] = [
     # Row 0
     Cell(0, 0, False, True, False, False),
     Cell(0, 1, False, False, False, True),
@@ -113,14 +113,14 @@ maze: list[Cell] = [
     Cell(9, 8, True, False, True, True),
     Cell(9, 9, True, False, True, False),
 ]
-# maze: list[Cell] = [
-#     Cell(0, 0, False, True, False, False),
-#     Cell(0, 1, False, True, False, True),
-#     Cell(0, 2, False, True, True, False),
-#     Cell(1, 0, True, False, False, True),
-#     Cell(1, 1, True, True, True, False),
-#     Cell(1, 2, True, False, False, False),
-#     Cell(2, 0, False, False, False, True),
-#     Cell(2, 1, True, False, True, True),
-#     Cell(2, 2, False, False, True, False),
-# ]
+cells_maze_3: list[Cell] = [
+    Cell(0, 0, False, True, False, False),
+    Cell(0, 1, False, True, False, True),
+    Cell(0, 2, False, True, True, False),
+    Cell(1, 0, True, False, False, True),
+    Cell(1, 1, True, True, True, False),
+    Cell(1, 2, True, False, False, False),
+    Cell(2, 0, False, False, False, True),
+    Cell(2, 1, True, False, True, True),
+    Cell(2, 2, False, False, True, False),
+]

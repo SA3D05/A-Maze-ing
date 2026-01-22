@@ -1,9 +1,0 @@
-Traceback (most recent call last):
-  File "/home/saad/maze/a_maze_ing.py", line 202, in <module>
-    wrapper(main)
-  File "/usr/lib/python3.12/curses/__init__.py", line 94, in wrapper
-    return func(stdscr, *args, **kwds)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/saad/maze/a_maze_ing.py", line 199, in main
-    time.sleep(10)
-KeyboardInterrupt
