@@ -20,7 +20,7 @@ def main(stdscr: curses.window) -> None:
     stdscr.refresh()
     stdscr.getch()
 
-    maze: Maze = Maze(cells_maze_10, HEIGHT, WIDTH)
+    maze: Maze = Maze(cells_maze_3, HEIGHT, WIDTH)
 
     pdeb("creating grid [...]")
     maze.gen_grid()

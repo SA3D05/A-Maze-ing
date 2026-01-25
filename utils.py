@@ -6,10 +6,19 @@ from typing import List, Dict, Union, Any, Set
 
 class Maze:
 
-    def __init__(self, cells: List[Cell], height: int, width: int) -> None:
+    def __init__(
+        self,
+        cells: List[Cell],
+        height: int,
+        width: int,
+        horizontal_shift: int = 0,
+        vertical_shift: int = 0,
+    ) -> None:
         self.cells = cells
         self.height = height
         self.width = width
+        self.horizontal_shift = horizontal_shift
+        self.vertical_shift = vertical_shift
         self._elements: List[Element] = []
 
     def get_elements(self) -> List[Element]:
@@ -23,34 +32,104 @@ class Maze:
                 x_even = True if row % 2 == 0 else False
                 # corners
                 if column == 0 and row == 0:
-                    self._elements.append(Element(column, row, Tile.LEFT_TOP.value))
+                    self._elements.append(
+                        Element(
+                            column + self.vertical_shift,
+                            row + self.horizontal_shift,
+                            Tile.LEFT_TOP.value,
+                        )
+                    )
                 elif column == 0 and row == self.width * 2:
-                    self._elements.append(Element(column, row, Tile.RIGHT_TOP.value))
+                    self._elements.append(
+                        Element(
+                            column + self.vertical_shift,
+                            row + self.horizontal_shift,
+                            Tile.RIGHT_TOP.value,
+                        )
+                    )
                 elif column == self.height * 2 and row == 0:
-                    self._elements.append(Element(column, row, Tile.LEFT_BOTTOM.value))
+                    self._elements.append(
+                        Element(
+                            column + self.vertical_shift,
+                            row + self.horizontal_shift,
+                            Tile.LEFT_BOTTOM.value,
+                        )
+                    )
                 elif column == self.height * 2 and row == self.width * 2:
-                    self._elements.append(Element(column, row, Tile.RIGHT_BOTTOM.value))
+                    self._elements.append(
+                        Element(
+                            column + self.vertical_shift,
+                            row + self.horizontal_shift,
+                            Tile.RIGHT_BOTTOM.value,
+                        )
+                    )
 
                 elif x_even and column == 0:
-                    self._elements.append(Element(column, row, Tile.T_DOWN.value))
+                    self._elements.append(
+                        Element(
+                            column + self.vertical_shift,
+                            row + self.horizontal_shift,
+                            Tile.T_DOWN.value,
+                        )
+                    )
                 elif x_even and column == self.height * 2:
-                    self._elements.append(Element(column, row, Tile.T_UP.value))
+                    self._elements.append(
+                        Element(
+                            column + self.vertical_shift,
+                            row + self.horizontal_shift,
+                            Tile.T_UP.value,
+                        )
+                    )
 
                 elif y_even:
                     if row == 0:
-                        self._elements.append(Element(column, row, Tile.T_RIGHT.value))
+                        self._elements.append(
+                            Element(
+                                column + self.vertical_shift,
+                                row + self.horizontal_shift,
+                                Tile.T_RIGHT.value,
+                            )
+                        )
                     elif row == self.width * 2:
-                        self._elements.append(Element(column, row, Tile.T_LEFT.value))
+                        self._elements.append(
+                            Element(
+                                column + self.vertical_shift,
+                                row + self.horizontal_shift,
+                                Tile.T_LEFT.value,
+                            )
+                        )
                     elif x_even:
-                        self._elements.append(Element(column, row, Tile.CENTER.value))
+                        self._elements.append(
+                            Element(
+                                column + self.vertical_shift,
+                                row + self.horizontal_shift,
+                                Tile.CENTER.value,
+                            )
+                        )
                     else:
                         self._elements.append(
-                            Element(column, row, Tile.HORIZONTAL.value)
+                            Element(
+                                column + self.vertical_shift,
+                                row + self.horizontal_shift,
+                                Tile.HORIZONTAL.value,
+                            )
                         )
                 elif not y_even and x_even:
-                    self._elements.append(Element(column, row, Tile.VERTICAL.value))
+                    self._elements.append(
+                        Element(
+                            column + self.vertical_shift,
+                            row + self.horizontal_shift,
+                            Tile.VERTICAL.value,
+                        )
+                    )
                 else:
-                    self._elements.append(Element(column, row, " "))
+                    self._elements.append(
+                        Element(
+                            column + self.vertical_shift,
+                            row + self.horizontal_shift,
+                            " ",
+                        )
+                    )
 
     def brake_walls(self):
 
@@ -72,7 +151,7 @@ class Maze:
                 # up and right  for the next cell handel the previes down and left so we dont actily need them
 
     def get_cell_pos(self, pos) -> int:
-        result: int = (pos * 2) + 1
+        result: int = (pos * 2) + 1 + self.shift
         return result
 
     def get_up_element(self, element: Element):
