@@ -1,3 +1,7 @@
 
-1- add logic to control where to draw the maze
-2- add interactive menu
+1- add logic to control where to draw the maze [DONE]
+2- add interactive menu [IN PROGRESS]
+3- handle if the terminal size not enough to draw the maze and the menu [TODO]
+4- add colors  [TODO]
+5- make the code more less messy like a freak wrote it  [TODO]
+// ykon khir hh

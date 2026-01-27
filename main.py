@@ -46,11 +46,13 @@ def main(stdscr: curses.window) -> None:
     )
 
     maze: Maze = Maze(
-        cells_place_holder.cells_maze_3,
+        cells_place_holder.cells_maze_10,
         HEIGHT,
         WIDTH,
-        int((width / 2) - (maze_width / 2)),
-        3,
+        0,
+        0,
+        # int((width / 2) - (maze_width / 2)),
+        # 3,
     )
 
     pdeb("creating grid [...]")
@@ -62,34 +64,31 @@ def main(stdscr: curses.window) -> None:
         stdscr.refresh()
 
     pdeb("complet grid [DONE]\n")
-    # stdscr.getch()
+    stdscr.getch()
 
-    # pdeb("breaking walls [...]")
-    # maze.brake_walls()
-    # # render breaking wals
+    pdeb("breaking walls [...]")
+    maze.brake_walls()
+    # render breaking wals
 
-    # for element in maze.get_elements():
-    #     sleep(0.001)
-    #     stdscr.addch(element.y, element.x, element.sprite)
-    #     stdscr.refresh()
-    # pdeb("complet breking [DONE]\n")
-    # stdscr.getch()
+    for element in maze.get_elements():
+        sleep(0.001)
+        stdscr.addch(element.y, element.x, element.sprite)
+        stdscr.refresh()
+    pdeb("complet breking [DONE]\n")
+    stdscr.getch()
 
-    # pdeb("fix corners [...]")
-    # maze.handel_corners()
+    pdeb("fix corners [...]")
+    maze.handel_corners()
 
-    # for element in maze.get_elements():
-    #     stdscr.addch(element.y, element.x, element.sprite)
-    #     stdscr.refresh()
-    #     sleep(0.001)
-    # pdeb("corners comlete [DONE]\n")
+    for element in maze.get_elements():
+        stdscr.addch(element.y, element.x, element.sprite)
+        stdscr.refresh()
+        sleep(0.001)
+    pdeb("corners comlete [DONE]\n")
 
     pdeb("\npress any button to leve!\n")
     stdscr.getch()
     pdeb("byyyyyyyyyy!!")
 
 
-try:
-    wrapper(main)
-except Exception as e:
-    print(f"Error: {e}")
+wrapper(main)

@@ -20,7 +20,24 @@ def main(stdscr: curses.window) -> None:
     stdscr.refresh()
     stdscr.getch()
 
-    maze: Maze = Maze(cells_maze_3, HEIGHT, WIDTH)
+    # get terminal size
+    term_height, term_width = stdscr.getmaxyx()
+
+    # calculate maze size
+    maze_height = HEIGHT * 2 + 1
+    maze_width = WIDTH * 2 + 1
+
+    maze: Maze = Maze(
+        cells_maze_10,
+        HEIGHT,
+        WIDTH,
+        int((term_width / 2) - (maze_width / 2)),
+        int((term_height / 2) - (maze_height / 2)),
+        # 3,
+        # 3,
+        # 0,
+        # 0,
+    )
 
     pdeb("creating grid [...]")
     maze.gen_grid()
@@ -59,7 +76,7 @@ def main(stdscr: curses.window) -> None:
     pdeb("byyyyyyyyyy!!")
 
 
-try:
-    wrapper(main)
-except Exception as e:
-    print(f"Error: {e}")
+# try:
+wrapper(main)
+# except Exception as e:
+#     print(f"Error: {e}\ntraceback:\n{e.__traceback__}")

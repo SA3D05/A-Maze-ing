@@ -14,6 +14,14 @@ class Maze:
         horizontal_shift: int = 0,
         vertical_shift: int = 0,
     ) -> None:
+        """Initialize the Maze with cells, dimensions, and optional shifts.
+        Args:
+            cells (List[Cell]): List of Cell objects representing the maze structure.
+            height (int): Height of the maze in cells.
+            width (int): Width of the maze in cells.
+            horizontal_shift (int, optional): Horizontal shift for rendering. Defaults to 0.
+            vertical_shift (int, optional): Vertical shift for rendering. Defaults to 0.
+        """
         self.cells = cells
         self.height = height
         self.width = width
@@ -25,7 +33,9 @@ class Maze:
         return self._elements
 
     def gen_grid(self):
-
+        """Generate the initial grid structure of the maze.
+        Note: Make me less ugly !!
+        """
         for column in range(self.height * 2 + 1):
             y_even = True if column % 2 == 0 else False
             for row in range(self.width * 2 + 1):
@@ -137,21 +147,25 @@ class Maze:
             for element in self._elements:
                 # up
                 if (
-                    element.x == self.get_cell_pos(cell.x)
-                    and element.y == self.get_cell_pos(cell.y) - 1
+                    element.x == self.get_horizontal_cell_pos(cell.x)
+                    and element.y == self.get_vertical_cell_pos(cell.y) - 1
                 ):
                     if cell.up:
                         element.sprite = " "
                 # right
-                if element.x == self.get_cell_pos(
+                if element.x == self.get_horizontal_cell_pos(
                     cell.x
-                ) + 1 and element.y == self.get_cell_pos(cell.y):
+                ) + 1 and element.y == self.get_vertical_cell_pos(cell.y):
                     if cell.right:
                         element.sprite = " "
                 # up and right  for the next cell handel the previes down and left so we dont actily need them
 
-    def get_cell_pos(self, pos) -> int:
-        result: int = (pos * 2) + 1 + self.shift
+    def get_horizontal_cell_pos(self, pos) -> int:
+        result: int = (pos * 2) + 1 + self.horizontal_shift
+        return result
+
+    def get_vertical_cell_pos(self, pos) -> int:
+        result: int = (pos * 2) + 1 + self.vertical_shift
         return result
 
     def get_up_element(self, element: Element):
@@ -199,6 +213,7 @@ class Maze:
                     element.sprite = Tile.VERTICAL.value
 
     def handel_center(self, element: Element):
+        """Handle the rendering of center junctions based on surrounding elements."""
         up = 1 if self.get_up_element(element) != " " else 0
         down = 2 if self.get_down_element(element) != " " else 0
         left = 4 if self.get_left_element(element) != " " else 0
