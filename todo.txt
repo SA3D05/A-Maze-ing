@@ -1,4 +1,7 @@
 
+
+
+// important rule alwase begin with vertical or y becuse cuses do!!!
 1- add logic to control where to draw the maze [DONE]
 2- add interactive menu [IN PROGRESS]
 3- handle if the terminal size not enough to draw the maze and the menu [TODO]
