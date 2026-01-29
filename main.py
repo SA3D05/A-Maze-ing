@@ -4,8 +4,8 @@ from time import sleep
 from utils import Maze
 from deb import pdeb
 import curses
-from random import shuffle
-import cells_place_holder
+from generator import MazeGenerator
+from model import Cell as ModelCell
 
 
 HEIGHT = int(argv[1])
@@ -25,34 +25,69 @@ def main(stdscr: curses.window) -> None:
 
     if maze_height > height or maze_width > width:
         pdeb(
-            f"Terminal size too small for the maze ({maze_height}x{maze_width} required). Resize and try again."
+            f"Terminal size too small for the maze "
+            f"({maze_height}x{maze_width} required). "
+            "Resize and try again."
         )
 
         stdscr.addstr(
             0,
             0,
-            f"Terminal size too small for the maze ({maze_height}x{maze_width} required). Resize and try again.",
-        )
+            (
+                f"Terminal size too small for the maze "
+                f"({maze_height}x{maze_width} required). "
+                "Resize and try again."
+                ),
+                )
         stdscr.refresh()
         stdscr.getch()
         raise Exception("Terminal size too small for the maze.")
     stdscr.addstr(
-        0, WIDTH * 2 + 1, f"Terminal size: {height} rows high, {width} columns wide" * 2
-    )
+        0,
+        WIDTH * 2 + 1,
+        (
+            f"Terminal size: {height} rows high, "
+            f"{width} columns wide"
+            ) * 2,
+            )
+
     stdscr.addstr(
         1,
         WIDTH * 2 + 1,
         f"Maze size: {maze_height} rows high, {maze_width} columns wide",
     )
 
+    # Generate maze via MazeGenerator and convert to model.Cell list
+    class Config:
+        width = WIDTH
+        height = HEIGHT
+        entry = (0, 0)
+        exit = (WIDTH - 1, HEIGHT - 1)
+        perfect = True
+        algorithm = "prim"
+        seed = None
+
+    gen = MazeGenerator(Config(), verbose=False)
+    gen_maze = gen.generate()
+
+    converted_cells = []
+    # convert generator.Cell (x,y,walls) -> model.Cell(y,x,up,down,left,right)
+    for y in range(HEIGHT):
+        for x in range(WIDTH):
+            gcell = gen_maze.cells[y][x]
+            up_open = not gcell.walls[0]
+            right_open = not gcell.walls[1]
+            down_open = not gcell.walls[2]
+            left_open = not gcell.walls[3]
+            converted_cells.append(ModelCell(y, x, up_open, down_open,
+                                             left_open, right_open))
+
     maze: Maze = Maze(
-        cells_place_holder.cells_maze_10,
+        converted_cells,
         HEIGHT,
         WIDTH,
         0,
         0,
-        # int((width / 2) - (maze_width / 2)),
-        # 3,
     )
 
     pdeb("creating grid [...]")

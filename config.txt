@@ -1,7 +1,8 @@
+# Sample config
 
-WIDTH=10
-HEIGHT=10
+WIDTH=5
+HEIGHT=5
 ENTRY=0,0
-EXIT=19,14
+EXIT=2,2
 OUTPUT_FILE=maze.txt
 PERFECT=True

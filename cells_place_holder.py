@@ -1,126 +1,76 @@
-from model import Cell
+"""Compatibility shim: provide `cells_maze_10` and `cells_maze_3` by
+generating mazes via `generator.MazeGenerator` and converting to
+`model.Cell` objects expected by the rest of the codebase.
+"""
+
+from generator import MazeGenerator
+from model import Cell as ModelCell
+from pathlib import Path
 
 
-cells_maze_10: list[Cell] = [
-    # Row 0
-    Cell(0, 0, False, True, False, False),
-    Cell(0, 1, False, False, False, True),
-    Cell(0, 2, False, True, True, False),
-    Cell(0, 3, False, True, False, False),
-    Cell(0, 4, False, False, False, True),
-    Cell(0, 5, False, True, True, False),
-    Cell(0, 6, False, False, False, True),
-    Cell(0, 7, False, True, True, False),
-    Cell(0, 8, False, False, False, True),
-    Cell(0, 9, False, True, True, False),
-    # Row 1
-    Cell(1, 0, True, True, False, False),
-    Cell(1, 1, False, True, False, True),
-    Cell(1, 2, True, False, True, False),
-    Cell(1, 3, True, True, False, False),
-    Cell(1, 4, False, True, False, True),
-    Cell(1, 5, True, False, True, True),
-    Cell(1, 6, False, True, True, False),
-    Cell(1, 7, True, True, False, False),
-    Cell(1, 8, False, True, False, True),
-    Cell(1, 9, True, False, True, False),
-    # Row 2
-    Cell(2, 0, True, False, False, True),
-    Cell(2, 1, True, True, True, False),
-    Cell(2, 2, False, True, False, True),
-    Cell(2, 3, True, False, True, False),
-    Cell(2, 4, True, True, False, False),
-    Cell(2, 5, False, False, False, True),
-    Cell(2, 6, True, True, True, False),
-    Cell(2, 7, True, False, False, True),
-    Cell(2, 8, True, True, True, False),
-    Cell(2, 9, False, True, False, False),
-    # Row 3
-    Cell(3, 0, False, True, False, True),
-    Cell(3, 1, True, False, True, False),
-    Cell(3, 2, True, True, False, False),
-    Cell(3, 3, False, True, False, True),
-    Cell(3, 4, True, False, True, True),
-    Cell(3, 5, False, True, True, False),
-    Cell(3, 6, True, False, False, True),
-    Cell(3, 7, False, True, True, False),
-    Cell(3, 8, True, False, False, True),
-    Cell(3, 9, True, True, True, False),
-    # Row 4
-    Cell(4, 0, True, True, False, False),
-    Cell(4, 1, False, True, False, True),
-    Cell(4, 2, True, False, True, True),
-    Cell(4, 3, True, True, True, False),
-    Cell(4, 4, False, True, False, False),
-    Cell(4, 5, True, True, False, True),
-    Cell(4, 6, False, True, True, False),
-    Cell(4, 7, True, False, False, True),
-    Cell(4, 8, False, True, True, False),
-    Cell(4, 9, True, True, False, False),
-    # Row 5
-    Cell(5, 0, True, False, False, True),
-    Cell(5, 1, True, True, True, False),
-    Cell(5, 2, False, True, False, True),
-    Cell(5, 3, True, False, True, False),
-    Cell(5, 4, True, True, False, True),
-    Cell(5, 5, True, False, True, False),
-    Cell(5, 6, True, True, False, False),
-    Cell(5, 7, False, True, False, True),
-    Cell(5, 8, True, False, True, True),
-    Cell(5, 9, True, True, True, False),
-    # Row 6
-    Cell(6, 0, False, True, False, True),
-    Cell(6, 1, True, False, True, False),
-    Cell(6, 2, True, True, False, False),
-    Cell(6, 3, False, True, False, True),
-    Cell(6, 4, True, False, True, False),
-    Cell(6, 5, False, True, False, True),
-    Cell(6, 6, True, False, True, True),
-    Cell(6, 7, True, True, True, False),
-    Cell(6, 8, False, True, False, True),
-    Cell(6, 9, True, False, True, False),
-    # Row 7
-    Cell(7, 0, True, True, False, False),
-    Cell(7, 1, False, True, False, True),
-    Cell(7, 2, True, False, True, True),
-    Cell(7, 3, True, True, True, False),
-    Cell(7, 4, False, True, False, True),
-    Cell(7, 5, True, False, True, False),
-    Cell(7, 6, False, True, False, True),
-    Cell(7, 7, True, False, True, False),
-    Cell(7, 8, True, True, False, False),
-    Cell(7, 9, False, True, False, False),
-    # Row 8
-    Cell(8, 0, True, False, False, True),
-    Cell(8, 1, True, True, True, False),
-    Cell(8, 2, False, True, False, True),
-    Cell(8, 3, True, False, True, False),
-    Cell(8, 4, True, True, False, False),
-    Cell(8, 5, False, True, False, True),
-    Cell(8, 6, True, False, True, True),
-    Cell(8, 7, False, True, True, False),
-    Cell(8, 8, True, True, False, False),
-    Cell(8, 9, True, True, False, False),
-    # Row 9
-    Cell(9, 0, False, False, False, True),
-    Cell(9, 1, True, False, True, True),
-    Cell(9, 2, True, False, True, False),
-    Cell(9, 3, False, False, False, True),
-    Cell(9, 4, True, False, True, True),
-    Cell(9, 5, True, False, True, False),
-    Cell(9, 6, False, False, False, True),
-    Cell(9, 7, True, False, True, True),
-    Cell(9, 8, True, False, True, True),
-    Cell(9, 9, True, False, True, False),
-]
-cells_maze_3: list[Cell] = [
-    Cell(0, 0, False, True, False, False),
-    Cell(0, 1, False, True, False, True),
-    Cell(0, 2, False, True, True, False),
-    Cell(1, 0, True, False, False, True),
-    Cell(1, 1, True, True, True, False),
-    Cell(1, 2, True, False, False, False),
-    Cell(2, 0, False, False, False, True),
-    Cell(2, 1, True, False, True, True),
-    Cell(2, 2, False, False, True, False),
-]
+def _make_cells(
+        width: int, height: int, seed: int | None = None) -> list[ModelCell]:
+    """Generate and convert generator cells into `model.Cell` instances."""
+    class Config:
+        pass
+
+    cfg = Config()
+    cfg.width = width
+    cfg.height = height
+    cfg.entry = (0, 0)
+    cfg.exit = (width - 1, height - 1)
+    cfg.perfect = True
+    cfg.algorithm = "prim"
+    cfg.seed = seed
+
+    gen = MazeGenerator(cfg, verbose=False)
+    gen_maze = gen.generate()
+
+    converted = []
+    for y in range(height):
+        for x in range(width):
+            gcell = gen_maze.cells[y][x]
+            up_open = not gcell.walls[0]
+            right_open = not gcell.walls[1]
+            down_open = not gcell.walls[2]
+            left_open = not gcell.walls[3]
+            converted.append(ModelCell(y, x, up_open, down_open, left_open,
+                                       right_open))
+
+    return converted
+
+
+def _load_config(path: str = "config.txt") -> dict:
+    """Load simple KEY=VALUE config into a dict (keys uppercased)."""
+    cfg = {}
+    p = Path(path)
+    if not p.exists():
+        return cfg
+
+    for line in p.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        if '=' not in line:
+            continue
+        k, v = line.split('=', 1)
+        cfg[k.strip().upper()] = v.strip()
+
+    return cfg
+
+
+# Generate `cells_maze` dynamically from `config.txt` when available.
+# Falls back to 10x10 when the config is missing or invalid.
+_cfg = _load_config()
+_width = int(_cfg.get('WIDTH', 10))
+_height = int(_cfg.get('HEIGHT', 10))
+_seed = None
+if 'SEED' in _cfg:
+    try:
+        _seed = int(_cfg['SEED'])
+    except Exception:
+        _seed = None
+
+cells_maze = _make_cells(_width, _height, seed=_seed)
+
+__all__ = ['cells_maze', '_make_cells']
