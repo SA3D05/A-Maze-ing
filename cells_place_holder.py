@@ -113,6 +113,7 @@ cells_maze_10: list[Cell] = [
     Cell(9, 8, True, False, True, True),
     Cell(9, 9, True, False, True, False),
 ]
+
 cells_maze_3: list[Cell] = [
     Cell(0, 0, False, True, False, False),
     Cell(0, 1, False, True, False, True),

@@ -1,8 +1,0 @@
-Traceback (most recent call last):
-  File "/home/satifi/Desktop/maze/a_maze_ing.py", line 88, in <module>
-    wrapper(main)
-  File "/usr/lib/python3.10/curses/__init__.py", line 94, in wrapper
-    return func(stdscr, *args, **kwds)
-  File "/home/satifi/Desktop/maze/a_maze_ing.py", line 48, in main
-    stdscr.addch(element.y, element.x, element.sprite)
-_curses.error: add_wch() returned ERR

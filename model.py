@@ -111,9 +111,12 @@ class Menu:
     def get_sections(self) -> List[MenuSection]:
         return self.sections
 
+    def get_selected_index(self) -> int:
+        return self.selected_index
+
     def add_section(self, text):
         self.sections.append(
-            MenuSection(text, len(self.sections), len(self.sections) == 1)
+            MenuSection(text, len(self.sections), len(self.sections) == 0)
         )
 
     def build(self):
@@ -148,6 +151,9 @@ class Menu:
             self.sections[selected_index].toggle()
             self.sections[target_index].toggle()
             self.selected_index += 1
+
+    def rebuild(self, stdscr):
+        pass
 
 
 class Tile(Enum):

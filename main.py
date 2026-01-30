@@ -141,57 +141,11 @@ def main(stdscr: curses.window) -> None:
 
         stdscr.refresh()
 
-        horizontal_shit = 70
-        vertical_shit = 10
-
-        menu = Menu(vertical_shit, horizontal_shit)
-
-        sections = ["Start", "Re-generate", "Show/Hide", "Exit"]
-
-        for text in sections:
-            menu.add_section(text)
-
-        stdscr.refresh()
-
-        menu.build()
         # menu.move_up()
-
-        def rebuild(vertical_shit):
-            for section in menu.get_sections():
-                for element in section.get_elements():
-                    stdscr.addch(
-                        element.y,
-                        element.x,
-                        element.sprite if section.selected else " ",
-                    )
-
-                stdscr.addstr(
-                    vertical_shit + 1,
-                    (horizontal_shit + 1) + (20 // 2) - (len(section.text) // 2),
-                    section.text,
-                )
-                vertical_shit += 3
 
         # sleep(2)
         # stdscr.clear()
         rebuild(vertical_shit)
-        while True:
-            key = stdscr.getch()
-
-            if key == curses.KEY_UP:
-                stdscr.addstr(2, 0, "You pressed UP   ")
-                menu.move_up()
-                rebuild(vertical_shit)
-            elif key == curses.KEY_DOWN:
-                stdscr.addstr(2, 0, "You pressed DOWN ")
-                menu.move_down()
-                rebuild(vertical_shit)
-            elif key == curses.KEY_LEFT:
-                stdscr.addstr(2, 0, "You pressed LEFT ")
-            elif key == curses.KEY_RIGHT:
-                stdscr.addstr(2, 0, "You pressed RIGHT")
-            elif key == ord("q"):
-                break
 
         stdscr.refresh()
         stdscr.getch()
