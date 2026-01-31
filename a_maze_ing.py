@@ -8,7 +8,7 @@ from utils import Maze
 from sys import argv
 from deb import pdeb
 import curses
-from model import MenuSection, Menu
+from model import MenuSection, Menu, Tile
 
 WIDTH = int(argv[1])
 HEIGHT = int(argv[2])
@@ -19,7 +19,16 @@ HEIGHT = int(argv[2])
 # • Change maze wall colours.
 def render_elements(stdscr, elements):
     for element in elements:
-        stdscr.addch(element.y, element.x, element.sprite)
+        stdscr.addch(
+            element.y,
+            element.x,
+            element.sprite,
+            (
+                curses.color_pair(1)
+                if element.sprite is Tile.HORIZONTAL.value
+                else curses.color_pair(2)
+            ),
+        )
         stdscr.refresh()
 
 
@@ -44,7 +53,15 @@ def main(stdscr: curses.window) -> None:
 
     curses.curs_set(0)
     stdscr.keypad(True)
+    curses.start_color()
+    curses.init_color(10, 1000, 0, 0)
+    curses.init_color(2, 0, 0, 1000)
+
+    curses.init_pair(1, 10, curses.COLOR_BLACK)
+    curses.init_pair(2, 2, curses.COLOR_BLACK)
+
     stdscr.clear()
+    stdscr.addstr("hello world")
     stdscr.refresh()
 
     # get terminal size
@@ -84,6 +101,7 @@ def main(stdscr: curses.window) -> None:
     rebuild(stdscr, menu, vertical_shit, horizontal_shit)
 
     maze.gen_grid()
+
     maze.brake_walls()
     maze.handel_corners()
     render_elements(
@@ -103,7 +121,7 @@ def main(stdscr: curses.window) -> None:
 
     stdscr.addstr(2, 0, "fix corners [...]")
     maze.handel_corners()
-    empty = False
+    # empty = False
     # while True:
     #     key = stdscr.getch()
     #     if key == curses.KEY_UP:
@@ -140,8 +158,7 @@ def main(stdscr: curses.window) -> None:
     #                 empty = False
 
     #             case 2:
-    #                 empty = not empty
-    #                 render_elements(stdscr, maze.get_elements(), empty)
+    #                 render_elements(stdscr, maze.get_elements())
     #             case 3:
     #                 break
 

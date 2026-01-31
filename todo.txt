@@ -1,10 +1,4 @@
-
-
-
-// important rule alwase begin with vertical or y becuse cuses do!!!
-1- add logic to control where to draw the maze [DONE]
-2- add interactive menu [IN PROGRESS]
-3- handle if the terminal size not enough to draw the maze and the menu [TODO]
-4- add colors  [TODO]
-5- make the code more less messy like a freak wrote it  [TODO]
-// ykon khir hh
+seddik parts:
++ creata a file named maze_generator.py (containing Mazegenerator class)
++ cells_place_holder ==> create logic for a maze instead of hardcoding one (class named Cell)
++ create all the class in a file named model.py(using classed named maze class: conatining cell config and cell class: )

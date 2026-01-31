@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/satifi/Desktop/maze/a_maze_ing.py", line 173, in <module>
+    wrapper(main)
+  File "/usr/lib/python3.10/curses/__init__.py", line 94, in wrapper
+    return func(stdscr, *args, **kwds)
+  File "/home/satifi/Desktop/maze/a_maze_ing.py", line 103, in main
+    maze.gen_grid()
+AttributeError: 'Maze' object has no attribute 'gen_grid'
