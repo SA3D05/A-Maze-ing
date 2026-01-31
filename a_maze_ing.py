@@ -1,111 +1,63 @@
-from typing import List, Dict, Union, Any, Set
-from random import shuffle
-from curses import wrapper
-from time import sleep
-from utils import Maze
-from sys import argv
-from deb import pdeb
 import curses
-from generator import MazeGenerator
-from model import Cell as ModelCell
-from typing import List, Dict, Union, Any, Set
-from typing import List, Dict, Union, Any, Set
-from random import shuffle
 from curses import wrapper
-from time import sleep
-from utils import Maze
 from sys import argv
-from deb import pdeb
-import curses
+from cells_place_holder import MazeGenerator
+from utils import Maze
+
+if len(argv) < 3:
+    print("Usage: python3 a_maze_ing.py <width> <height>")
+    exit(1)
+
+WIDTH, HEIGHT = int(argv[1]), int(argv[2])
 
 
-WIDTH = int(argv[1])
-HEIGHT = int(argv[2])
+def render_elements(stdscr, elements):
+    """Draws the maze sprites to the terminal screen."""
+
+    for element in elements:
+        try:
+            stdscr.addch(element.y, element.x, element.sprite)
+        except curses.error:
+            pass
+    stdscr.refresh()
 
 
 def main(stdscr: curses.window) -> None:
-
     curses.curs_set(0)
+    stdscr.keypad(True)
     stdscr.clear()
-    stdscr.refresh()
-    stdscr.getch()
 
-    # get terminal size
     term_height, term_width = stdscr.getmaxyx()
+    generator = MazeGenerator(WIDTH, HEIGHT)
 
-    # calculate maze size
-    maze_height = HEIGHT * 2 + 1
-    maze_width = WIDTH * 2 + 1
-
-    # Generate maze via MazeGenerator and convert to model.Cell list
-    class Config:
-        width = WIDTH
-        height = HEIGHT
-        entry = (0, 0)
-        exit = (WIDTH - 1, HEIGHT - 1)
-        perfect = True
-        algorithm = "prim"
-        seed = None
-
-    gen = MazeGenerator(Config(), verbose=False)
-    gen_maze = gen.generate()
-
-    converted_cells = []
-    for y in range(HEIGHT):
-        for x in range(WIDTH):
-            gcell = gen_maze.cells[y][x]
-            up_open = not gcell.walls[0]
-            right_open = not gcell.walls[1]
-            down_open = not gcell.walls[2]
-            left_open = not gcell.walls[3]
-            converted_cells.append(ModelCell(y, x, up_open, down_open, left_open, right_open))
-
+    # Initialize the visual Maze utility with dynamic logic
     maze: Maze = Maze(
-        converted_cells,
-        HEIGHT,
-        WIDTH,
-        int((term_width / 2) - (maze_width / 2)),
-        int((term_height / 2) - (maze_height / 2)),
+        generator.generate(),
+        HEIGHT, WIDTH,
+        int((term_width / 2) - WIDTH),
+        int((term_height / 2) - (HEIGHT / 2)),
     )
 
-    pdeb("creating grid [...]")
-    maze.gen_grid()
-    shuffle(maze.get_elements())
-    # render grid
-    for element in maze.get_elements():
-        sleep(0.001)
-        stdscr.addch(element.y, element.x, element.sprite)
-        stdscr.refresh()
+    def redraw():
+        maze.gen_grid()
+        maze.brake_walls()
+        maze.handel_corners()
+        render_elements(stdscr, maze.get_elements())
 
-    pdeb("complet grid [DONE]\n")
-    stdscr.getch()
+    redraw()
 
-    pdeb("breaking walls [...]")
-    maze.brake_walls()
-    # render breaking wals
+    while True:
+        key = stdscr.getch()
 
-    for element in maze.get_elements():
-        sleep(0.001)
-        stdscr.addch(element.y, element.x, element.sprite)
-        stdscr.refresh()
-    pdeb("complet breking [DONE]\n")
-    stdscr.getch()
-
-    pdeb("fix corners [...]")
-    maze.handel_corners()
-
-    for element in maze.get_elements():
-        stdscr.addch(element.y, element.x, element.sprite)
-        stdscr.refresh()
-        sleep(0.001)
-    pdeb("corners comlete [DONE]\n")
-
-    pdeb("\npress any button to leve!\n")
-    stdscr.getch()
-    pdeb("byyyyyyyyyy!!")
+        # Exit on 'q' or 'Enter' as requested
+        if key == ord('q') or key == ord('\n'):
+            break
+        # Regenerate on 'r'
+        elif key == ord('r'):
+            stdscr.clear()
+            maze.cells = generator.generate()
+            redraw()
 
 
-# try:
-wrapper(main)
-# except Exception as e:
-#     print(f"Error: {e}\ntraceback:\n{e.__traceback__}")
+if __name__ == "__main__":
+    wrapper(main)

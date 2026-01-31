@@ -1,0 +1,5 @@
+seddik parts:
++ creata a file named maze_generator.py (containing Mazegenerator class)
++ cells_place_holder ==> create logic for a maze instead of hardcoding one (class named Cell)
++ create all the class in a file named model.py(using classed named maze class: conatining cell config and cell class: )
+
