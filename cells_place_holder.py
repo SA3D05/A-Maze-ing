@@ -1,5 +1,7 @@
 import random
 from model import Cell
+from imperfect_maze import remove_random_walls
+import time
 
 
 class MazeGenerator:
@@ -30,7 +32,7 @@ class MazeGenerator:
                 neighbors.append((nx, ny, curr_attr, neigh_attr))
         return neighbors
 
-    def generate(self) -> list[Cell]:
+    def generate(self, make_perfect: bool = True) -> list[Cell]:
         """Recursive Backtracking to create a perfect maze."""
 
         stack = []
@@ -56,8 +58,14 @@ class MazeGenerator:
             else:
                 stack.pop()
 
+        if not make_perfect:
+            print("Modifying maza to be perfect...")
+            time.sleep(1)
+            remove_random_walls(self.grid, self.width, self.height, factor=0.1)
+
         flat_list = []
         for row in self.grid:
             for cell in row:
                 flat_list.append(cell)
+
         return flat_list

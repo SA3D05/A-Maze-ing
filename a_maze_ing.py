@@ -12,10 +12,13 @@ try:
                 config[key.strip().upper()] = value.strip()
         WIDTH = int(config.get("WIDTH", 10))
         HEIGHT = int(config.get("HEIGHT", 10))
+        is_perfect_str = config.get("PERFECT", "TRUE").strip().upper()
+        is_perfect = (is_perfect_str == "TRUE")
 except (FileNotFoundError, PermissionError, KeyError, ValueError) as e:
     print(f"[Error loading], using default config {e}")
     WIDTH = 10
     HEIGHT = 10
+    is_perfect = True
 
 
 def render_elements(stdscr, elements):
@@ -39,7 +42,7 @@ def main(stdscr: curses.window) -> None:
 
     # Initialize the visual Maze utility with dynamic logic
     maze: Maze = Maze(
-        generator.generate(),
+        generator.generate(make_perfect=is_perfect),
         HEIGHT, WIDTH,
         int((term_width / 2) - (WIDTH / 2)),
         int((term_height / 2) - (HEIGHT / 2)),
@@ -62,7 +65,7 @@ def main(stdscr: curses.window) -> None:
         # Regenerate on 'r'
         elif key == ord('r'):
             stdscr.clear()
-            maze.cells = generator.generate()
+            maze.cells = generator.generate(make_perfect=is_perfect)
             redraw()
 
 

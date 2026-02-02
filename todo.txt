@@ -3,3 +3,11 @@ seddik parts:
 + cells_place_holder ==> create logic for a maze instead of hardcoding one (class named Cell)
 + create all the class in a file named model.py(using classed named maze class: conatining cell config and cell class: )
 
+
+
+seddik ==> 02/02/2025
+---- task for this list to create another algo that generate imperfect maze ---
++ generating imperfect maze
++ depending on config.txt file to check of "perfect=true" generate perfect maze according to perfect flag
++ genrate the solution and the shortest path form E to X (algo Djikstra algo for a shortest path)
++ 42 drown as closed cells inside the maze
