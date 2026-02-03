@@ -8,19 +8,22 @@ class Maze:
         cells: List[Cell],
         height: int,
         width: int,
+        entry: tuple,
+        exit: tuple,
         horizontal_shift: int = 0,
         vertical_shift: int = 0,
     ) -> None:
         self.cells = cells
         self.height = height
         self.width = width
+        self.entry = entry
+        self.exit = exit
         self.horizontal_shift = horizontal_shift
         self.vertical_shift = vertical_shift
         self._elements: List[Element] = []
 
     def get_elements(self) -> List[Element]:
         return self._elements
-
 
     def gen_grid(self):
         """Generates the full grid with all initial junction sprites."""
@@ -66,9 +69,9 @@ class Maze:
 
                     if current_cell:
                         # Priority order: Shape -> Path -> Empty
-                        if (current_cell.x, current_cell.y) == (0, 0): # or your entry variable
+                        if (current_cell.x, current_cell.y) == self.entry:  # or your entry variable
                             sprite = "E"
-                        elif (current_cell.x, current_cell.y) == (self.width - 1, self.height - 1):
+                        elif (current_cell.x, current_cell.y) == self.exit:
                             sprite = "X"
                         elif current_cell.is_path:
                             sprite = "*"

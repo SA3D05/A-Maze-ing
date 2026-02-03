@@ -71,44 +71,43 @@ def main(stdscr: curses.window) -> None:
     term_height, term_width = stdscr.getmaxyx()
     generator = MazeGenerator(WIDTH, HEIGHT)
 
-    # Initialize the visual Maze utility with dynamic logic
+    # Initialize with cells, entry, and exit
+    maze_cells = generator.generate(make_perfect=is_perfect)
     maze: Maze = Maze(
-        generator.generate(make_perfect=is_perfect),
+        maze_cells,
         HEIGHT, WIDTH,
+        entry, exit,  # Pass these to the renderer
         int((term_width / 2) - (WIDTH / 2)),
         int((term_height / 2) - (HEIGHT / 2)),
     )
 
-    def redraw():
+    def update_and_draw():
+        # Reset path flags for all cells
+        for row in generator.grid:
+            for cell in row:
+                cell.is_path = False
+        
+        # Calculate new path
+        path = dijkstra(generator.grid, entry, exit)
+        if path:
+            for (px, py) in path:
+                generator.grid[py][px].is_path = True
+        
         maze.gen_grid()
         maze.brake_walls()
         maze.handel_corners()
         render_elements(stdscr, maze.get_elements())
 
-    path = dijkstra(generator.grid, entry, exit)
-    if path:
-        for (px, py) in path:
-            generator.grid[py][px].is_path = True
-
-    redraw()
+    update_and_draw()
 
     while True:
         key = stdscr.getch()
-
-        # Exit on 'q' or 'Enter' as requested
         if key == ord('q') or key == ord('\n'):
             break
-        # Regenerate on 'r'
         elif key == ord('r'):
             stdscr.clear()
             maze.cells = generator.generate(make_perfect=is_perfect)
-            redraw()
-
-    # path = dijkstra(generator.grid, entry, exit)
-    # if path:
-    #     for (px, py) in path:
-    #         generator.grid[py][px].is_path = True
-
+            update_and_draw()
 
 if __name__ == "__main__":
     wrapper(main)
