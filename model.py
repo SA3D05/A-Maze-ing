@@ -14,6 +14,9 @@ class Cell:
         self.left = left
         self.right = right
 
+        self.is_path = False
+        self.is_shape = False
+
 
 class Element:
     def __init__(

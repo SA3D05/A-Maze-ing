@@ -2,6 +2,8 @@ import curses
 from curses import wrapper
 from cells_place_holder import MazeGenerator
 from utils import Maze
+from gen_path import dijkstra
+
 
 config = {}
 try:
@@ -19,6 +21,35 @@ except (FileNotFoundError, PermissionError, KeyError, ValueError) as e:
     WIDTH = 10
     HEIGHT = 10
     is_perfect = True
+
+
+def get_safe_coords(key, default_x, default_y, max_w, max_h):
+    raw_val = config.get(key)
+    if not raw_val:
+        return (default_x, default_y)
+
+    try:
+        # Split "0,0" into [0, 0]
+        parts = raw_val.split(',')
+        if len(parts) != 2:
+            raise ValueError
+
+        x, y = int(parts[0].strip()), int(parts[1].strip())
+
+        # Check if within maze bounds
+        if 0 <= x < max_w and 0 <= y < max_h:
+            return (x, y)
+        else:
+            print(f"[Warning]: {key} {x},{y} is out of bounds. Using default.")
+            return (default_x, default_y)
+
+    except (ValueError, IndexError):
+        print(f"[Warning]: {key} has invalid format in config. Using default.")
+        return (default_x, default_y)
+
+
+entry = get_safe_coords("ENTRY", 0, 0, WIDTH, HEIGHT)
+exit = get_safe_coords("EXIT", WIDTH - 1, HEIGHT - 1, WIDTH, HEIGHT)
 
 
 def render_elements(stdscr, elements):
@@ -54,6 +85,11 @@ def main(stdscr: curses.window) -> None:
         maze.handel_corners()
         render_elements(stdscr, maze.get_elements())
 
+    path = dijkstra(generator.grid, entry, exit)
+    if path:
+        for (px, py) in path:
+            generator.grid[py][px].is_path = True
+
     redraw()
 
     while True:
@@ -67,6 +103,11 @@ def main(stdscr: curses.window) -> None:
             stdscr.clear()
             maze.cells = generator.generate(make_perfect=is_perfect)
             redraw()
+
+    # path = dijkstra(generator.grid, entry, exit)
+    # if path:
+    #     for (px, py) in path:
+    #         generator.grid[py][px].is_path = True
 
 
 if __name__ == "__main__":

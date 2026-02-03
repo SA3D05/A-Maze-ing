@@ -1,6 +1,7 @@
 from model import Element, Cell, Tile
 from typing import List
 
+
 class Maze:
     def __init__(
         self,
@@ -20,15 +21,16 @@ class Maze:
     def get_elements(self) -> List[Element]:
         return self._elements
 
+
     def gen_grid(self):
         """Generates the full grid with all initial junction sprites."""
-        self._elements = [] 
+        self._elements = []
         for column in range(self.height * 2 + 1):
             y_even = column % 2 == 0
             for row in range(self.width * 2 + 1):
                 x_even = row % 2 == 0
-                
-                # Assign visual sprites based on grid position
+
+                # 1. Determine the base wall/junction sprite
                 if column == 0 and row == 0:
                     sprite = Tile.LEFT_TOP.value
                 elif column == 0 and row == self.width * 2:
@@ -54,6 +56,26 @@ class Maze:
                 else:
                     sprite = " "
 
+                # 2. Logic for Cell Centers (Path, Shape, Entry, Exit)
+                if not x_even and not y_even:
+                    cell_x = (row - 1) // 2
+                    cell_y = (column - 1) // 2
+
+                    # Find the specific cell object instance
+                    current_cell = next((c for c in self.cells if c.x == cell_x and c.y == cell_y), None)
+
+                    if current_cell:
+                        # Priority order: Shape -> Path -> Empty
+                        if (current_cell.x, current_cell.y) == (0, 0): # or your entry variable
+                            sprite = "E"
+                        elif (current_cell.x, current_cell.y) == (self.width - 1, self.height - 1):
+                            sprite = "X"
+                        elif current_cell.is_path:
+                            sprite = "*"
+                        elif current_cell.is_shape:
+                            sprite = "█"
+
+                # 3. Append the element ONCE with the final determined sprite
                 self._elements.append(
                     Element(column + self.vertical_shift, row + self.horizontal_shift, sprite)
                 )
@@ -116,9 +138,9 @@ class Maze:
         down = 2 if self.get_down_element(element) not in [" ", None] else 0
         left = 4 if self.get_left_element(element) not in [" ", None] else 0
         right = 8 if self.get_right_element(element) not in [" ", None] else 0
-        
+
         score = up + down + left + right
-        
+
         BIT_MAP = {
             1: Tile.SHORT_UP.value, 2: Tile.SHORT_DOWN.value, 3: Tile.VERTICAL.value,
             4: Tile.SHORT_LEFT.value, 5: Tile.RIGHT_BOTTOM.value, 6: Tile.RIGHT_TOP.value,

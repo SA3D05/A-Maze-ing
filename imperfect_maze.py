@@ -1,5 +1,6 @@
 import random
 
+
 def remove_random_walls(grid, width, height, factor=0.1):
     """
     Takes a finished maze and breaks extra walls to create loops.
