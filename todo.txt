@@ -9,5 +9,5 @@ seddik ==> 02/02/2025
 ---- task for this list to create another algo that generate imperfect maze ---
 + generating imperfect maze
 + depending on config.txt file to check of "perfect=true" generate perfect maze according to perfect flag
-+ genrate the solution and the shortest path form E to X (algo Djikstra algo for a shortest path)
 + 42 drown as closed cells inside the maze
++ genrate the solution and the shortest path form E to X (algo Djikstra algo for a shortest path)

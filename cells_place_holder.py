@@ -37,6 +37,25 @@ class MazeGenerator:
 
         stack = []
         visited = set()
+
+        # Coordinates (x, y) that should stay as solid blocks to form "42"
+        # This is a rough 5x5 area example
+        coordinating_42_cells = [
+            # The '4' (Left side)
+            (0, 0), (0, 1), (0, 2), (1, 2), (2, 0), (2, 1), (2, 2), (2, 3), (2, 4),
+            # The '2' (Right side)
+            (4, 0), (5, 0), (6, 0), (6, 1), (6, 2), (5, 2), (4, 2), (4, 3), (4, 4), (5, 4), (6, 4)
+        ]
+
+        if self.width >= 10 and self.height >= 10:
+            start_x = (self.width - 7) // 2
+            start_y = (self.height - 5) // 2
+
+            for dx, dy in coordinating_42_cells:
+                target_x, target_y = start_x + dx, start_y + dy
+                if 0 <= target_x < self.width and 0 <= target_y < self.height:
+                    visited.add((target_x, target_y))
+
         start_pos = (0, 0)
         visited.add(start_pos)
         stack.append(self.grid[0][0])
