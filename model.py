@@ -1,19 +1,27 @@
 from curses import window
 from enum import Enum
+import random
+import time
 from typing import List, Dict, Union, Any, Set, Optional, Tuple
 from deb import pdeb
 
 
 class Cell:
     def __init__(
-        self, y: int, x: int, up: bool, down: bool, left: bool, right: bool
+        self,
+        y: int,
+        x: int,
+        up: bool,
+        right: bool,
+        down: bool,
+        left: bool,
     ) -> None:
         self.y = y
         self.x = x
         self.up = up
+        self.right = right
         self.down = down
         self.left = left
-        self.right = right
 
 
 class Element:
@@ -32,28 +40,23 @@ class Maze:
 
     def __init__(
         self,
-        cells: List[Cell],
-        height: int,
-        width: int,
     ) -> None:
-        """Initialize the Maze with cells, dimensions, and optional shifts.
-        Args:
-            cells (List[Cell]): List of Cell objects representing the maze structure.
-            height (int): Height of the maze in cells.
-            width (int): Width of the maze in cells.
-            horizontal_shift (int, optional): Horizontal shift for rendering. Defaults to 0.
-            vertical_shift (int, optional): Vertical shift for rendering. Defaults to 0.
-        """
-        self.cells = cells
-        self.height = height
-        self.width = width
-        self._elements: List[Element] = []
+        self._cells = list()
+        self._elements: List[Element] = list()
 
     def add_element(self, element_y: int, element_x: int, element_sprite) -> None:
         self._elements.append(Element(element_y, element_x, element_sprite))
 
     def get_elements(self) -> List[Element]:
         return self._elements
+
+    def get_cells(self) -> List[Cell]:
+        return self._cells
+
+    def update_cells(self, new_cells: List[Cell]):
+        self._cells.clear()
+        self._elements.clear()
+        self._cells = new_cells
 
 
 class MazeConfig:
@@ -157,7 +160,7 @@ class Menu:
         self.vertical_shift: int = vertical_shift
         self.horizontal_shift: int = horizontal_shift
         self.sections: List[MenuSection] = []
-        self.selected_index = 1
+        self.selected_index = 0
 
     def get_sections(self) -> List[MenuSection]:
         return self.sections
@@ -170,7 +173,7 @@ class Menu:
             MenuSection(
                 text,
                 len(self.sections),
-                len(self.sections) == 2,
+                len(self.sections) == 0,
                 self.vertical_shift,
                 self.horizontal_shift,
             )
@@ -201,9 +204,6 @@ class Menu:
             self.sections[selected_index].toggle()
             self.sections[target_index].toggle()
             self.selected_index += 1
-
-    def rebuild(self, stdscr):
-        pass
 
 
 class Tile(Enum):
@@ -255,8 +255,142 @@ class Rendrer:
 
 
 class MazeGenerator:
-    def __init__(self, config: MazeConfig) -> None:
+
+    def __init__(self, width: int, height: int, config: MazeConfig):
+        self.width = width
+        self.height = height
         self.config: MazeConfig = config
+
+    def _get_neighbors(self, x: int, y: int, visited: set):
+        neighbors = []
+        directions = [
+            (0, -1, "up", "down"),
+            (0, 1, "down", "up"),
+            (-1, 0, "left", "right"),
+            (1, 0, "right", "left"),
+        ]
+
+        for dx, dy, curr_attr, neigh_attr in directions:
+            nx, ny = x + dx, y + dy
+            # Strictly stay within bounds to keep outer walls solid
+            if (
+                0 <= nx < self.width
+                and 0 <= ny < self.height
+                and (nx, ny) not in visited
+            ):
+                neighbors.append((nx, ny, curr_attr, neigh_attr))
+        return neighbors
+
+    def generate(self, make_perfect: bool = True) -> list[Cell]:
+        """Recursive Backtracking to create a perfect maze."""
+
+        stack = []
+        visited = set()
+
+        # Coordinates (x, y) that should stay as solid blocks to form "42"
+        coordinating_42_cells = [
+            (0, 0),
+            (0, 1),
+            (0, 2),
+            (1, 2),
+            (2, 0),
+            (2, 1),
+            (2, 2),
+            (2, 3),
+            (2, 4),
+            (4, 0),
+            (5, 0),
+            (6, 0),
+            (6, 1),
+            (6, 2),
+            (5, 2),
+            (4, 2),
+            (4, 3),
+            (4, 4),
+            (5, 4),
+            (6, 4),
+        ]
+        self.grid = list()
+        for y in range(self.height):
+            row = list()
+            for x in range(self.width):
+                new_cell = Cell(y, x, True, True, True, True)
+                row.append(new_cell)
+            self.grid.append(row)
+
+        if self.width >= 10 and self.height >= 10:
+            start_x = (self.width - 7) // 2
+            start_y = (self.height - 5) // 2
+
+            for dx, dy in coordinating_42_cells:
+                target_x, target_y = start_x + dx, start_y + dy
+                if 0 <= target_x < self.width and 0 <= target_y < self.height:
+                    visited.add((target_x, target_y))
+                    self.grid[target_y][target_x].is_shape = True
+
+        start_pos = (0, 0)
+        visited.add(start_pos)
+        stack.append(self.grid[0][0])
+
+        while stack:
+            current = stack[-1]
+            neighbors = self._get_neighbors(current.x, current.y, visited)
+
+            if neighbors:
+                nx, ny, curr_wall, neigh_wall = random.choice(neighbors)
+                neighbor_cell = self.grid[ny][nx]
+
+                # Remove shared walls internally to carve paths
+                setattr(current, curr_wall, False)
+                setattr(neighbor_cell, neigh_wall, False)
+
+                visited.add((nx, ny))
+                stack.append(neighbor_cell)
+            else:
+                stack.pop()
+
+        if not make_perfect:
+            self.remove_random_walls(self.grid, self.width, self.height, factor=0.1)
+
+        flat_list = []
+        for row in self.grid:
+            for cell in row:
+                flat_list.append(cell)
+
+        return flat_list
+
+    def remove_random_walls(self, grid, width, height, factor=0.1):
+        """
+        Takes a finished maze and breaks extra walls to create loops.
+        """
+
+        pos_x = (width - 7) // 2
+        pos_y = (height - 5) // 2
+        end_x, end_y = pos_x + 7, pos_y + 5
+
+        def is_protected(x, y):
+            return pos_x <= x < end_x and pos_y <= y < end_y
+
+        extra_openings = int((width * height) * factor)
+
+        for _ in range(extra_openings):
+            x = random.randint(0, width - 2)
+            y = random.randint(0, height - 2)
+
+            current_cell = grid[y][x]
+
+            if random.choice(["right", "down"]) == "right":
+                neighbor = grid[y][x + 1]
+                if not is_protected(x, y) and not is_protected(x + 1, y):
+                    current_cell.right = False
+                    neighbor.left = False
+            else:
+                neighbor = grid[y + 1][x]
+                if not is_protected(x, y) and not is_protected(x, y + 1):
+                    current_cell.down = False
+                    neighbor.up = False
+
+    # -------------------------------------------------------------
 
     def generate_perfect_maze(self, config: MazeConfig) -> Maze: ...
 
@@ -385,20 +519,20 @@ class MazeGenerator:
         return None
 
     def brake_walls(self, maze: Maze):
-        for cell in maze.cells:
+        for cell in maze.get_cells():
             for element in maze.get_elements():
                 # up
                 if (
                     element.x == self.get_horizontal_cell_pos(cell.x)
                     and element.y == self.get_vertical_cell_pos(cell.y) - 1
                 ):
-                    if cell.up:
+                    if not cell.up:
                         element.sprite = " "
                 # right
                 if element.x == self.get_horizontal_cell_pos(
                     cell.x
                 ) + 1 and element.y == self.get_vertical_cell_pos(cell.y):
-                    if cell.right:
+                    if not cell.right:
                         element.sprite = " "
                 # up and right  for the next cell handel the previes down and left so we dont actily need them
 
