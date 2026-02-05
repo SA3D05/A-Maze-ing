@@ -1,8 +1,7 @@
 from curses import window
 from enum import Enum
 import random
-import time
-from typing import List, Dict, Union, Any, Set, Optional, Tuple
+from typing import List, Tuple
 from deb import pdeb
 
 
@@ -38,11 +37,12 @@ class Element:
 
 class Maze:
 
-    def __init__(
-        self,
-    ) -> None:
-        self._cells = list()
+    def __init__(self, y_shift: int, x_shift: int) -> None:
+        self.y_shift = y_shift
+        self.x_shift = x_shift
+
         self._elements: List[Element] = list()
+        self._cells = list()
 
     def add_element(self, element_y: int, element_x: int, element_sprite) -> None:
         self._elements.append(Element(element_y, element_x, element_sprite))
@@ -62,24 +62,30 @@ class Maze:
 class MazeConfig:
     def __init__(
         self,
-        height: int,
-        width: int,
-        entry: Tuple[int, int],
-        exit: Tuple[int, int],
-        output: str,
-        perfect: bool,
-        y_shift: int,
-        x_shift: int,
     ) -> None:
 
-        self.height: int = height
-        self.width: int = width
-        self.entry: Tuple[int, int] = entry
-        self.exit: Tuple[int, int] = exit
-        self.output: str = output
-        self.perfect: bool = perfect
-        self.y_shift: int = y_shift
-        self.x_shift: int = x_shift
+        self.height: int = 10
+        self.width: int = 10
+        self.entry: Tuple[int, int] = (0, 0)
+        self.exit: Tuple[int, int] = (9, 9)
+        self.output: str = "output.txt"
+        self.perfect: bool = True
+        maze_height = self.height * 2 + 1
+        maze_width = self.width * 2 + 1
+
+    def parse_config(self, config_file: str):
+        config_info = {}
+        with open(config_file, "r") as fd:
+            for line in fd:
+                if "=" in line and not line.startswith("#"):
+                    key, value = line.strip().split("=", 1)
+                    config_info[key.strip().upper()] = value.strip()
+            self.width = int(config_info.get("WIDTH", 10))
+            self.height = int(config_info.get("HEIGHT", 10))
+            is_perfect_str = config_info.get("PERFECT", "TRUE").strip().upper()
+            self.is_perfect = is_perfect_str == "TRUE"
+            self.entry = tuple([config_info.get("ENTRY", "0,0").split(",")])
+            self.exit = tuple([config_info.get("EXIT", "9,9").split(",")])
 
 
 class MenuSection:
@@ -187,19 +193,23 @@ class Menu:
         target_index = selected_index - 1
 
         if target_index < 0:
-            pdeb("you cant move up")
+            self.sections[selected_index].toggle()
+            self.sections[-1].toggle()
+            self.selected_index = len(self.sections) - 1
         else:
             self.sections[self.selected_index].toggle()
             self.sections[self.selected_index - 1].toggle()
             self.selected_index -= 1
 
     def move_down(self):
-
         selected_index = self.selected_index
         target_index = selected_index + 1
+        pdeb(f"selected_index: {selected_index}, target_index: {target_index}")
 
         if target_index >= len(self.sections):
-            pdeb("you cant move down")
+            self.sections[selected_index].toggle()
+            self.sections[0].toggle()
+            self.selected_index = 0
         else:
             self.sections[selected_index].toggle()
             self.sections[target_index].toggle()
@@ -256,9 +266,7 @@ class Rendrer:
 
 class MazeGenerator:
 
-    def __init__(self, width: int, height: int, config: MazeConfig):
-        self.width = width
-        self.height = height
+    def __init__(self, config: MazeConfig):
         self.config: MazeConfig = config
 
     def _get_neighbors(self, x: int, y: int, visited: set):
@@ -274,8 +282,8 @@ class MazeGenerator:
             nx, ny = x + dx, y + dy
             # Strictly stay within bounds to keep outer walls solid
             if (
-                0 <= nx < self.width
-                and 0 <= ny < self.height
+                0 <= nx < self.config.width
+                and 0 <= ny < self.config.height
                 and (nx, ny) not in visited
             ):
                 neighbors.append((nx, ny, curr_attr, neigh_attr))
@@ -311,20 +319,23 @@ class MazeGenerator:
             (6, 4),
         ]
         self.grid = list()
-        for y in range(self.height):
+        for y in range(self.config.height):
             row = list()
-            for x in range(self.width):
+            for x in range(self.config.width):
                 new_cell = Cell(y, x, True, True, True, True)
                 row.append(new_cell)
             self.grid.append(row)
 
-        if self.width >= 10 and self.height >= 10:
-            start_x = (self.width - 7) // 2
-            start_y = (self.height - 5) // 2
+        if self.config.width >= 10 and self.config.height >= 10:
+            start_x = (self.config.width - 7) // 2
+            start_y = (self.config.height - 5) // 2
 
             for dx, dy in coordinating_42_cells:
                 target_x, target_y = start_x + dx, start_y + dy
-                if 0 <= target_x < self.width and 0 <= target_y < self.height:
+                if (
+                    0 <= target_x < self.config.width
+                    and 0 <= target_y < self.config.height
+                ):
                     visited.add((target_x, target_y))
                     self.grid[target_y][target_x].is_shape = True
 
@@ -350,7 +361,9 @@ class MazeGenerator:
                 stack.pop()
 
         if not make_perfect:
-            self.remove_random_walls(self.grid, self.width, self.height, factor=0.1)
+            self.remove_random_walls(
+                self.grid, self.config.width, self.config.height, factor=0.1
+            )
 
         flat_list = []
         for row in self.grid:
@@ -392,10 +405,6 @@ class MazeGenerator:
 
     # -------------------------------------------------------------
 
-    def generate_perfect_maze(self, config: MazeConfig) -> Maze: ...
-
-    def generate_nonperfect_maze(self, config: MazeConfig) -> Maze: ...
-
     def gen_grid(self, maze: Maze) -> None:
         """Generate the initial grid structure of the maze.
         Note: Make me less ugly !!
@@ -406,90 +415,90 @@ class MazeGenerator:
                 x_even = True if row % 2 == 0 else False
                 if column == 0 and row == 0:
                     maze.add_element(
-                        column + self.config.y_shift,
-                        row + self.config.x_shift,
+                        column + maze.y_shift,
+                        row + maze.x_shift,
                         Tile.LEFT_TOP.value,
                     )
                 elif column == 0 and row == self.config.width * 2:
                     maze.add_element(
-                        column + self.config.y_shift,
-                        row + self.config.x_shift,
+                        column + maze.y_shift,
+                        row + maze.x_shift,
                         Tile.RIGHT_TOP.value,
                     )
                 elif column == self.config.height * 2 and row == 0:
                     maze.add_element(
-                        column + self.config.y_shift,
-                        row + self.config.x_shift,
+                        column + maze.y_shift,
+                        row + maze.x_shift,
                         Tile.LEFT_BOTTOM.value,
                     )
                 elif column == self.config.height * 2 and row == self.config.width * 2:
                     maze.add_element(
-                        column + self.config.y_shift,
-                        row + self.config.x_shift,
+                        column + maze.y_shift,
+                        row + maze.x_shift,
                         Tile.RIGHT_BOTTOM.value,
                     )
 
                 elif x_even and column == 0:
                     maze.add_element(
-                        column + self.config.y_shift,
-                        row + self.config.x_shift,
+                        column + maze.y_shift,
+                        row + maze.x_shift,
                         Tile.T_DOWN.value,
                     )
                 elif x_even and column == self.config.height * 2:
                     maze.add_element(
-                        column + self.config.y_shift,
-                        row + self.config.x_shift,
+                        column + maze.y_shift,
+                        row + maze.x_shift,
                         Tile.T_UP.value,
                     )
 
                 elif y_even:
                     if row == 0:
                         maze.add_element(
-                            column + self.config.y_shift,
-                            row + self.config.x_shift,
+                            column + maze.y_shift,
+                            row + maze.x_shift,
                             Tile.T_RIGHT.value,
                         )
                     elif row == self.config.width * 2:
                         maze.add_element(
-                            column + self.config.y_shift,
-                            row + self.config.x_shift,
+                            column + maze.y_shift,
+                            row + maze.x_shift,
                             Tile.T_LEFT.value,
                         )
 
                     elif x_even:
                         maze.add_element(
-                            column + self.config.y_shift,
-                            row + self.config.x_shift,
+                            column + maze.y_shift,
+                            row + maze.x_shift,
                             Tile.CENTER.value,
                         )
 
                     else:
                         maze.add_element(
-                            column + self.config.y_shift,
-                            row + self.config.x_shift,
+                            column + maze.y_shift,
+                            row + maze.x_shift,
                             Tile.HORIZONTAL.value,
                         )
 
                 elif not y_even and x_even:
                     maze.add_element(
-                        column + self.config.y_shift,
-                        row + self.config.x_shift,
+                        column + maze.y_shift,
+                        row + maze.x_shift,
                         Tile.VERTICAL.value,
                     )
 
                 else:
                     maze.add_element(
-                        column + self.config.y_shift,
-                        row + self.config.x_shift,
+                        column + maze.y_shift,
+                        row + maze.x_shift,
                         " ",
                     )
 
-    def get_horizontal_cell_pos(self, pos) -> int:
-        result: int = (pos * 2) + 1 + self.config.x_shift
+    def get_horizontal_cell_pos(self, pos: int, x_shift: int) -> int:
+        result: int = (pos * 2) + 1 + x_shift
         return result
 
-    def get_vertical_cell_pos(self, pos) -> int:
-        result: int = (pos * 2) + 1 + self.config.y_shift
+    def get_vertical_cell_pos(self, pos: int, y_shift: int) -> int:
+        result: int = (pos * 2) + 1 + y_shift
         return result
 
     def get_near_element(
@@ -523,15 +532,16 @@ class MazeGenerator:
             for element in maze.get_elements():
                 # up
                 if (
-                    element.x == self.get_horizontal_cell_pos(cell.x)
-                    and element.y == self.get_vertical_cell_pos(cell.y) - 1
+                    element.x == self.get_horizontal_cell_pos(cell.x, maze.x_shift)
+                    and element.y
+                    == self.get_vertical_cell_pos(cell.y, maze.y_shift) - 1
                 ):
                     if not cell.up:
                         element.sprite = " "
                 # right
                 if element.x == self.get_horizontal_cell_pos(
-                    cell.x
-                ) + 1 and element.y == self.get_vertical_cell_pos(cell.y):
+                    cell.x, maze.x_shift
+                ) + 1 and element.y == self.get_vertical_cell_pos(cell.y, maze.y_shift):
                     if not cell.right:
                         element.sprite = " "
                 # up and right  for the next cell handel the previes down and left so we dont actily need them

@@ -1,7 +1,22 @@
-Traceback (most recent call last):
-  File "/home/satifi/Desktop/maze/main.py", line 136, in <module>
-  File "/usr/lib/python3.10/curses/__init__.py", line 94, in wrapper
-    return func(stdscr, *args, **kwds)
-  File "/home/satifi/Desktop/maze/main.py", line 99, in main
-    maze.update_cells(generator.generate(False))
-KeyboardInterrupt
+y: 35, x: 106
+selected_index: 0, target_index: 1
+selected_index: 1, target_index: 2
+selected_index: 2, target_index: 3
+selected_index: 3, target_index: 4
+selected_index: 3, target_index: 4
+selected_index: 0, target_index: 1
+selected_index: 1, target_index: 2
+selected_index: 0, target_index: 1
+selected_index: 1, target_index: 2
+selected_index: 2, target_index: 3
+selected_index: 1, target_index: 2
+selected_index: 2, target_index: 3
+selected_index: 3, target_index: 4
+selected_index: 2, target_index: 3
+selected_index: 3, target_index: 4
+selected_index: 0, target_index: 1
+selected_index: 1, target_index: 2
+selected_index: 2, target_index: 3
+
+
+likeeeeeeeeeeeeeeeeeeeeeeeeee
