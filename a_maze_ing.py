@@ -3,7 +3,7 @@ from curses import wrapper
 from cells_place_holder import MazeGenerator
 from utils import Maze
 from gen_path import dijkstra
-
+import random
 
 config = {}
 try:
@@ -12,15 +12,28 @@ try:
             if "=" in line and not line.startswith("#"):
                 key, value = line.strip().split("=", 1)
                 config[key.strip().upper()] = value.strip()
+
         WIDTH = int(config.get("WIDTH", 10))
         HEIGHT = int(config.get("HEIGHT", 10))
+
         is_perfect_str = config.get("PERFECT", "TRUE").strip().upper()
         is_perfect = (is_perfect_str == "TRUE")
+
+        raw_seed = config.get("SEED")
+
+        if raw_seed and raw_seed.strip():
+            random.seed(raw_seed)
+            current_seed = raw_seed
+        else:
+            random.seed(None)
+            current_seed = "Random/System Time"
+
 except (FileNotFoundError, PermissionError, KeyError, ValueError) as e:
     print(f"[Error loading], using default config {e}")
-    WIDTH = 10
-    HEIGHT = 10
     is_perfect = True
+    exit(1)
+
+print(f"Configuration Loaded: {WIDTH}x{HEIGHT} (Seed: {current_seed})")
 
 
 def get_safe_coords(key, default_x, default_y, max_w, max_h):
@@ -40,12 +53,11 @@ def get_safe_coords(key, default_x, default_y, max_w, max_h):
         if 0 <= x < max_w and 0 <= y < max_h:
             return (x, y)
         else:
-            print(f"[Warning]: {key} {x},{y} is out of bounds. Using default.")
-            return (default_x, default_y)
+            raise ValueError
 
     except (ValueError, IndexError):
-        print(f"[Warning]: {key} has invalid format in config. Using default.")
-        return (default_x, default_y)
+        print(f"[Warning]: {key} {x},{y} has invalid format in config.txt")
+        exit(1)
 
 
 entry = get_safe_coords("ENTRY", 0, 0, WIDTH, HEIGHT)
@@ -86,13 +98,13 @@ def main(stdscr: curses.window) -> None:
         for row in generator.grid:
             for cell in row:
                 cell.is_path = False
-        
+
         # Calculate new path
         path = dijkstra(generator.grid, entry, exit)
         if path:
             for (px, py) in path:
                 generator.grid[py][px].is_path = True
-        
+
         maze.gen_grid()
         maze.brake_walls()
         maze.handel_corners()
@@ -108,6 +120,7 @@ def main(stdscr: curses.window) -> None:
             stdscr.clear()
             maze.cells = generator.generate(make_perfect=is_perfect)
             update_and_draw()
+
 
 if __name__ == "__main__":
     wrapper(main)

@@ -44,7 +44,7 @@ class MazeGenerator:
             (4, 0), (5, 0), (6, 0), (6, 1), (6, 2), (5, 2), (4, 2), (4, 3), (4, 4), (5, 4), (6, 4)
         ]
 
-        if self.width >= 10 and self.height >= 10:
+        if self.width >= 10 and self.height >= 7:
             start_x = (self.width - 7) // 2
             start_y = (self.height - 5) // 2
 
