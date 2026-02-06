@@ -4,6 +4,7 @@ from cells_place_holder import MazeGenerator
 from utils import Maze
 from gen_path import dijkstra
 import random
+from file_manager import save_maze
 
 config = {}
 try:
@@ -105,6 +106,7 @@ def main(stdscr: curses.window) -> None:
             for (px, py) in path:
                 generator.grid[py][px].is_path = True
 
+            save_maze(generator.grid, WIDTH, HEIGHT, entry, exit, path, "maze.txt")
         maze.gen_grid()
         maze.brake_walls()
         maze.handel_corners()
