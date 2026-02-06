@@ -1,8 +1,10 @@
 from curses import window
+import curses
 from enum import Enum
 import random
 from typing import List, Tuple
 from deb import pdeb
+from time import sleep
 
 
 class Cell:
@@ -241,11 +243,15 @@ class Rendrer:
     def __init__(self, stdscr: window) -> None:
         self.stdscr: window = stdscr
 
-    def render_maze(self, maze: Maze):
+    def render_maze(self, maze: Maze, duration: float, color_id: int):
 
         for element in maze.get_elements():
-            self.stdscr.addch(element.y, element.x, element.sprite)
-        self.stdscr.refresh()
+            self.stdscr.addch(
+                element.y, element.x, element.sprite, curses.color_pair(color_id)
+            )
+
+            self.stdscr.refresh()
+            sleep(duration)
 
     def render_menu(self, menu: Menu):
         for section in menu.get_sections():

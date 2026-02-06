@@ -1,174 +1,120 @@
-# from unittest import case
-# from cells_place_holder import cells_maze_10, cells_maze_3
-# from typing import List, Dict, Union, Any, Set
-# from random import shuffle
-# from curses import wrapper
-# from time import sleep
-# from sys import argv
-# from deb import pdeb
-# import curses
-# from model import MenuSection, Menu, Tile
+#!/usr/bin/python3
 
-# WIDTH = int(argv[1])
-# HEIGHT = int(argv[2])
+from curses import window, wrapper, curs_set
+import curses
+from deb import pdeb
+from model import Menu, Rendrer, MazeGenerator, MazeConfig, Maze
+from cells_place_holder import cells_maze_10
+from time import sleep
+from sys import argv
+from random import choice
 
 
-# # • Re-generate a new maze and display it.
-# # • Show/Hide a valid shortest path from the entrance to the exit.
-# # • Change maze wall colours.
-# def render_elements(stdscr, elements):
-#     for element in elements:
-#         stdscr.addch(
-#             element.y,
-#             element.x,
-#             element.sprite,
-#             (
-#                 curses.color_pair(1)
-#                 if element.sprite is Tile.HORIZONTAL.value
-#                 else curses.color_pair(2)
-#             ),
-#         )
-#         stdscr.refresh()
+def main(stdscr: window):
+    curs_set(0)
+    stdscr.keypad(True)
+    curses.init_color(10, 90, 78, 129)
+
+    # Define Cool Maze Wall Colors
+    curses.init_color(11, 0, 960, 1000)  # Neon Cyan
+    curses.init_color(12, 1000, 0, 498)  # Electric Pink
+    curses.init_color(13, 717, 580, 956)  # Soft Lavender
+
+    # Create Color Pairs (Foreground, Background)
+    curses.init_pair(1, 11, 10)  # Cyan on Void
+    curses.init_pair(2, 12, 10)  # Pink on Void
+    curses.init_pair(3, 13, 10)  # Lavender on Void
+
+    term_height, term_width = stdscr.getmaxyx()
+
+    config: MazeConfig = MazeConfig()
+
+    try:
+        config.parse_config("config.txt")
+    except Exception as e:
+        pdeb(f"[Config error]: {e}")
+        exit(1)
+
+    maze_height = config.height * 2 + 1
+    maze_width = config.width * 2 + 1
+
+    menu = Menu(int((term_height / 2) - (maze_height / 2)), int((term_width / 1.5)))
+
+    sections = ["Generate", "Show/Hide", "Change colours", "Exit"]
+
+    if maze_width + 2 > term_width / 2:  # if terminal pass maze + sections
+        raise Exception("Terminal size not enugh to draw the maze!")
+    if 3 * len(sections) + 4 > term_height:  # if terminal pass sections
+        raise Exception("Terminal size not enugh to draw the maze!")
+    if maze_height + 4 > term_height:  # if terminal pass maze
+        raise Exception("Terminal size not enugh to draw the maze!")
+
+    for section in sections:
+        menu.add_section(section)
+
+    rendrer = Rendrer(stdscr)
+
+    rendrer.render_menu(menu)
+    generator = MazeGenerator(config)
+    maze = Maze(
+        int((term_height / 2) - (maze_height / 2)), int((term_width / 2) - (maze_width))
+    )
+
+    generator.gen_grid(maze)
+
+    colors_id = [1, 2, 3]
+    current_color_id = 1
+
+    rendrer.render_maze(maze, 0.001, current_color_id)
+    while True:
+        key = stdscr.getch()
+        if key == curses.KEY_RESIZE:
+            raise Exception("Please do not resize the terminal or i will kill you")
+        if key == ord("\n"):
+            match menu.get_selected_index():
+                case 0:
+                    maze.update_cells(generator.generate(config.is_perfect))
+                    generator.gen_grid(maze)
+                    generator.brake_walls(maze)
+                    generator.handel_corners(maze.get_elements())
+                    rendrer.render_maze(maze, 0.0003, current_color_id)
+                    curses.flushinp()
+                case 2:
+                    old_color = current_color_id
+                    while current_color_id is old_color:
+                        current_color_id = choice(colors_id)
+                    rendrer.render_maze(maze, 0.0003, current_color_id)
+                    curses.flushinp()
+
+                case 3:
+                    break
+
+        elif key == curses.KEY_DOWN:
+            menu.move_down()
+            rendrer.render_menu(menu)
+            curses.flushinp()
+        elif key == curses.KEY_UP:
+            menu.move_up()
+            rendrer.render_menu(menu)
+            curses.flushinp()
 
 
-# def rebuild(stdscr, menu, vertical_shit, horizontal_shit):
-#     for section in menu.get_sections():
-#         for element in section.get_elements():
-#             stdscr.addch(
-#                 element.y,
-#                 element.x,
-#                 element.sprite if section.selected else " ",
-#             )
+if __name__ == "__main__":
 
-#         stdscr.addstr(
-#             vertical_shit + 1,
-#             (horizontal_shit + 1) + (20 // 2) - (len(section.text) // 2),
-#             section.text,
-#         )
-#         vertical_shit += 3
+    try:
+        if len(argv) < 2:
+            raise KeyboardInterrupt("Missing config file")
+        elif len(argv) > 2:
+            raise Exception("Too many arguments")
+    except Exception as e:
+        pdeb(f"[Arguments error]: {e}")
+        exit(1)
 
-
-# def main(stdscr: curses.window) -> None:
-
-#     curses.curs_set(0)
-#     stdscr.keypad(True)
-#     curses.start_color()
-#     curses.init_color(10, 1000, 0, 0)
-#     curses.init_color(2, 0, 0, 1000)
-
-#     curses.init_pair(1, 10, curses.COLOR_BLACK)
-#     curses.init_pair(2, 2, curses.COLOR_BLACK)
-
-#     stdscr.clear()
-#     stdscr.addstr("hello world")
-#     stdscr.refresh()
-
-#     # get terminal size
-#     term_height, term_width = stdscr.getmaxyx()
-
-#     # calculate maze size
-#     maze_height = HEIGHT * 2 + 1
-#     maze_width = WIDTH * 2 + 1
-
-#     maze: Maze = Maze(
-#         cells_maze_10,
-#         HEIGHT,
-#         WIDTH,
-#         int((term_width / 2) - (maze_width) - 2),
-#         int((term_height / 2) - (maze_height / 2)),
-#     )
-
-#     tp = 3 * 4
-#     mz = (maze_height - tp) / 2
-#     horizontal_shit = int((term_width / 2) + 2)
-#     vertical_shit = int((term_height / 2) - mz)
-
-#     menu = Menu(vertical_shit, horizontal_shit)
-
-#     sections = [
-#         "Start",
-#         "Re-generate",
-#         "Show/Hide",
-#         "Exit",
-#     ]
-
-#     for text in sections:
-#         menu.add_section(text)
-
-#     stdscr.refresh()
-#     menu.build()
-#     rebuild(stdscr, menu, vertical_shit, horizontal_shit)
-
-#     maze.gen_grid()
-
-#     maze.brake_walls()
-#     maze.handel_corners()
-#     render_elements(
-#         stdscr,
-#         maze.get_elements(),
-#     )
-#     stdscr.getch()
-#     # randomize the elements
-#     # shuffle(maze.get_elements())
-
-#     # stdscr.addstr(0, 0, "creating grid [...]")
-#     # render_elements(stdscr, maze.get_elements())
-#     # stdscr.getch()
-
-#     # stdscr.addstr(1, 0, "breaking walls [...]")
-#     # stdscr.getch()
-
-#     stdscr.addstr(2, 0, "fix corners [...]")
-#     maze.handel_corners()
-#     # empty = False
-#     # while True:
-#     #     key = stdscr.getch()
-#     #     if key == curses.KEY_UP:
-#     #         stdscr.addstr(2, 0, "You pressed UP   ")
-#     #         menu.move_up()
-#     #         rebuild(stdscr, menu, vertical_shit, horizontal_shit)
-#     #     elif key == curses.KEY_DOWN:
-#     #         stdscr.addstr(2, 0, "You pressed DOWN ")
-#     #         menu.move_down()
-#     #         rebuild(stdscr, menu, vertical_shit, horizontal_shit)
-#     #     elif key == curses.KEY_LEFT:
-#     #         stdscr.addstr(2, 0, "You pressed LEFT ")
-#     #     elif key == curses.KEY_RIGHT:
-#     #         stdscr.addstr(2, 0, "You pressed RIGHT")
-#     #     elif key == ord("\n"):
-#     #         stdscr.addstr(2, 0, "You pressed ENTER")
-#     #         match menu.get_selected_index():
-#     #             case 0:
-#     #                 maze.gen_grid()
-#     #                 maze.brake_walls()
-#     #                 maze.handel_corners()
-#     #                 render_elements(stdscr, maze.get_elements())
-#     #                 empty = False
-
-#     #             case 1:
-#     #                 for element in maze.get_elements():
-#     #                     stdscr.addch(element.y, element.x, " ")
-#     #                 render_elements(stdscr, maze.get_elements())
-#     #                 maze.gen_grid()
-#     #                 render_elements(stdscr, maze.get_elements())
-#     #                 maze.brake_walls()
-#     #                 maze.handel_corners()
-#     #                 render_elements(stdscr, maze.get_elements())
-#     #                 empty = False
-
-#     #             case 2:
-#     #                 render_elements(stdscr, maze.get_elements())
-#     #             case 3:
-#     #                 break
-
-#     #             case _:
-#     #                 stdscr.addstr(3, 0, "Nothing")
-
-#     #     elif key == ord("q"):
-#     #         break
-
-
-# # try:
-# wrapper(main)
-# # except Exception as e:
-# #     print(f"Error: {e}\ntraceback:\n{e.__traceback__}")
+    try:
+        wrapper(main)
+    except KeyboardInterrupt:
+        print("Exit the program")
+    except curses.error as e:
+        print(f"[Curses error]: {e}")
+    except BaseException as e:
+        print(f"[Error]: {e}")

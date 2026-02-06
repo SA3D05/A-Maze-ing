@@ -1,7 +1,7 @@
 
 
 run:
-	python3 main.py config.txt 2>log.log
+	python3 a_maze_ing.py config.txt 2>log.log
 
 
 
