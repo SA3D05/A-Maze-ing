@@ -5,10 +5,14 @@ from utils import Maze
 from gen_path import dijkstra
 import random
 from file_manager import save_maze
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_PATH = os.path.join(BASE_DIR, "config.txt")
 
 config = {}
 try:
-    with open("config.txt", "r") as fd:
+    with open(CONFIG_PATH, "r") as fd:
         for line in fd:
             if "=" in line and not line.startswith("#"):
                 key, value = line.strip().split("=", 1)
@@ -124,5 +128,10 @@ def main(stdscr: curses.window) -> None:
             update_and_draw()
 
 
-if __name__ == "__main__":
+def main_wrapper():
+    """Entry point from the console script"""
     wrapper(main)
+
+
+if __name__ == "__main__":
+    main_wrapper()

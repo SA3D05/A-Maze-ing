@@ -1,4 +1,5 @@
 import heapq
+import math
 
 
 def dijkstra(grid, start, end):
@@ -6,6 +7,10 @@ def dijkstra(grid, start, end):
     grid: 2D list of Cell objects
     start/end: tuples (x, y)
     """
+    if not isinstance(grid[0], list):
+        # We assume square or use a known width
+        width = int(math.sqrt(len(grid)))
+        grid = [grid[i: i + width] for i in range(0, len(grid), width)]
 
     rows, cols = len(grid), len(grid[0])
     # pq: (distance, (x, y), path_list)

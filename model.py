@@ -17,6 +17,9 @@ class Cell:
         self.is_path = False
         self.is_shape = False
 
+    def __repr__(self):
+        return f"({self.x}, {self.y})"
+
 
 class Element:
     def __init__(

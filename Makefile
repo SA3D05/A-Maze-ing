@@ -1,12 +1,36 @@
-help:
-	@echo "Maze Generator & Solver - Available Commands"
-	@echo ""
-	@echo "  make run          - Run standard 10x10 maze with solution"
-	@echo "  make animated     - Run animated solution trace"
-	@echo "  make help         - Show this help message"
-	@echo ""
+PYTHON = python3
+PIP = pip3
+
+.PHONY: install run debug clean lint lint-strict
+
+install:
+	$(PIP) install flake8 mypy
+	$(PIP) install --upgrade pip setuptools wheel
+	$(PIP) install -e .
 
 run:
-	python3 a_maze_ing.py
+	$(PYTHON) a_maze_ing.py
 
-.PUHONY: help run
+debug:
+	$(PYTHON) -m pdb a_maze_ing.py
+
+clean:
+	rm -rf __pycache__
+	rm -rf .mypy_cache
+	rm -f maze.txt
+
+build:
+	$(PIP) install --upgrade build
+	$(PYTHON) -m build
+	@echo "Build complete. Check the 'dist/' folder for your .whl and .tar.gz files."
+
+lint:
+	flake8 .
+	mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+
+lint-strict:
+	flake8 .
+	mypy . --strict
+
+validate:
+	$(PYTHON) output_validator.py maze.txt

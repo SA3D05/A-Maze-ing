@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "mazegen-sehallil"
+version = "1.0.0"
+description = "A modern terminal maze generator"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "*.py"}] # Includes all your python files
+include = [
+    { path = "config.txt", format = ["sdist", "wheel"] }
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+# Poetry handles your libraries here
+
+[tool.poetry.scripts]
+mazegen = "a_maze_ing:main_wrapper"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

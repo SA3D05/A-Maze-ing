@@ -1,1 +1,28 @@
-__pycache__
+# --- Python environment ---
+venv/
+.env
+bin/
+lib/
+include/
+
+# --- Python Build & Packaging ---
+*.egg-info/
+dist/
+build/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Tools & Linters ---
+.mypy_cache/
+.flake8
+.pytest_cache/
+.coverage
+
+# --- Project Specific Outputs ---
+maze.txt
+*.log
+
+# --- OS specific ---
+.DS_Store
+Thumbs.db
