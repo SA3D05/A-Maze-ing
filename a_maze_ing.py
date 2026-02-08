@@ -2,12 +2,16 @@
 
 from curses import window, wrapper, curs_set
 import curses
+
 from deb import pdeb
-from model import Menu, Rendrer, MazeGenerator, MazeConfig, Maze
-from cells_place_holder import cells_maze_10
-from time import sleep
 from sys import argv
 from random import choice
+
+from models.maze import Maze
+from models.maze_config import MazeConfig
+from models.maze_generator import MazeGenerator
+from models.menu import Menu
+from models.renderer import Rendrer
 
 
 def main(stdscr: window):
