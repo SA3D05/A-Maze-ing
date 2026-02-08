@@ -94,16 +94,16 @@
 # wrapper(main)
 
 
-from cells_place_holder import cells_maze_10, cells_maze_3
+from mazegen.cells_place_holder import cells_maze_10, cells_maze_3
 from typing import List, Dict, Union, Any, Set
 from random import shuffle
 from curses import wrapper
 from time import sleep
-from utils import Maze
+from app.utils import Maze
 from sys import argv
-from deb import pdeb
+from app.deb import pdeb
 import curses
-from model import MenuSection, Menu
+from mazegen.model import MenuSection, Menu
 
 WIDTH = int(argv[1])
 HEIGHT = int(argv[2])

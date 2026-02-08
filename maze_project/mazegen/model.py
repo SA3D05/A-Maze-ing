@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import List
-from deb import pdeb
+from app.deb import pdeb
 
 
 class Cell:

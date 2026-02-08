@@ -1,5 +1,5 @@
 import random
-from model import Cell
+from mazegen.model import Cell
 from imperfect_maze import remove_random_walls
 import time
 

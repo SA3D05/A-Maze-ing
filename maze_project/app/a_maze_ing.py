@@ -1,14 +1,20 @@
 import curses
 from curses import wrapper
-from cells_place_holder import MazeGenerator
-from utils import Maze
-from gen_path import dijkstra
+from mazegen.cells_place_holder import MazeGenerator
+from app.utils import Maze
+from mazegen.gen_path import dijkstra
 import random
-from file_manager import save_maze
+from app.file_manager import save_maze
 import os
+import sys
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_PATH = os.path.join(BASE_DIR, "config.txt")
+# BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_PATH = os.path.join(os.getcwd(), "config.txt")
+
+if not os.path.exists(CONFIG_PATH):
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    CONFIG_PATH = os.path.join(os.path.dirname(BASE_DIR), "config.txt")
+
 
 config = {}
 try:
@@ -36,7 +42,7 @@ try:
 except (FileNotFoundError, PermissionError, KeyError, ValueError) as e:
     print(f"[Error loading], using default config {e}")
     is_perfect = True
-    exit(1)
+    sys.exit(1)
 
 print(f"Configuration Loaded: {WIDTH}x{HEIGHT} (Seed: {current_seed})")
 

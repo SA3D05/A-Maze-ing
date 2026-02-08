@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from model import Cell
+from mazegen.model import Cell
 
 
 def save_maze(grid: List[List[Cell]], width: int, height: int, 

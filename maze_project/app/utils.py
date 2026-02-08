@@ -1,4 +1,4 @@
-from model import Element, Cell, Tile
+from mazegen.model import Element, Cell, Tile
 from typing import List
 
 
