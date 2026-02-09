@@ -3,8 +3,8 @@ class Element:
         self,
         y: int,
         x: int,
-        sprite: str,
+        shape: str,
     ):
         self.y = y
         self.x = x
-        self.sprite = sprite
+        self.shape = shape

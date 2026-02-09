@@ -1,11 +1,14 @@
-from typing import List
-import random
-
-from models.maze import Maze
+from models.cell_state import CellState
 from models.maze_config import MazeConfig
-from models.tile import Tile
 from models.element import Element
+from models.maze import Maze
+from models.tile import Tile
 from models.cell import Cell
+from typing import List, Optional
+from math import sqrt
+import random
+import heapq
+from deb import pdeb
 
 
 class MazeGenerator:
@@ -14,6 +17,7 @@ class MazeGenerator:
         self.config: MazeConfig = config
 
     def _get_neighbors(self, x: int, y: int, visited: set):
+
         neighbors = []
         directions = [
             (0, -1, "up", "down"),
@@ -33,68 +37,95 @@ class MazeGenerator:
                 neighbors.append((nx, ny, curr_attr, neigh_attr))
         return neighbors
 
-    def generate(self, make_perfect: bool = True) -> list[Cell]:
-        """Recursive Backtracking to create a perfect maze."""
+    def generate(self, maze: Maze, make_perfect: bool) -> None:
+        """Recursive Backtracking to create a perfect maze.
+        take maze object and update its cells with new generated ones.
+        """
 
+        grid: List[List[Cell]] = []
+        for y in range(self.config.height):
+            row: List[Cell] = []
+            for x in range(self.config.width):
+                current_cell_state: CellState = CellState.REGULAR
+
+                if (y, x) == self.config.entry:
+                    current_cell_state = CellState.ENTRY
+
+                if (y, x) == self.config.exit:
+                    current_cell_state = CellState.EXIT
+
+                new_cell = Cell(y, x, True, True, True, True, current_cell_state)
+                row.append(new_cell)
+            grid.append(row)
         stack = []
         visited = set()
 
         # Coordinates (x, y) that should stay as solid blocks to form "42"
+
         coordinating_42_cells = [
             (0, 0),
-            (0, 1),
-            (0, 2),
-            (1, 2),
+            (1, 0),
             (2, 0),
             (2, 1),
             (2, 2),
-            (2, 3),
-            (2, 4),
-            (4, 0),
-            (5, 0),
-            (6, 0),
-            (6, 1),
-            (6, 2),
-            (5, 2),
+            (3, 2),
             (4, 2),
-            (4, 3),
+            (0, 4),
+            (0, 5),
+            (0, 6),
+            (1, 6),
+            (2, 6),
+            (2, 5),
+            (2, 4),
+            (3, 4),
             (4, 4),
-            (5, 4),
-            (6, 4),
+            (4, 5),
+            (4, 6),
         ]
 
-        self.grid = list()
-        for y in range(self.config.height):
-            row = list()
-            for x in range(self.config.width):
-                new_cell = Cell(y, x, True, True, True, True)
-                row.append(new_cell)
-            self.grid.append(row)
-
-        if self.config.width >= 10 and self.config.height >= 10:
+        if self.config.width >= 9 and self.config.height >= 7:
             start_x = (self.config.width - 7) // 2
             start_y = (self.config.height - 5) // 2
 
-            for dx, dy in coordinating_42_cells:
+            for dy, dx in coordinating_42_cells:
                 target_x, target_y = start_x + dx, start_y + dy
+
+                # make this conition less ugly later
                 if (
-                    0 <= target_x < self.config.width
-                    and 0 <= target_y < self.config.height
+                    target_y == self.config.entry[0]
+                    and target_x == self.config.entry[1]
                 ):
-                    visited.add((target_x, target_y))
-                    self.grid[target_y][target_x].is_shape = True
+                    pdeb(
+                        "Error: The entry or exit point cannot be placed within the protected '42' area."
+                    )
+                    exit(1)
+                if target_y == self.config.exit[0] and target_x == self.config.exit[1]:
+                    pdeb(
+                        "Error: The entry or exit point cannot be placed within the protected '42' area."
+                    )
+                    exit(1)
+
+                for cell_list in grid:
+                    for cell in cell_list:
+                        if cell.x == target_x and cell.y == target_y:
+                            cell.state = CellState.FT
+                        # we dont know whta the fu** is this for
+                        # if (
+                        #     0 <= target_x < self.config.width
+                        #     and 0 <= target_y < self.config.height
+                        # ):
+                        visited.add((target_x, target_y))
 
         start_pos = (0, 0)
         visited.add(start_pos)
-        stack.append(self.grid[0][0])
-
+        stack.append(grid[0][0])
         while stack:
             current = stack[-1]
             neighbors = self._get_neighbors(current.x, current.y, visited)
 
             if neighbors:
                 nx, ny, curr_wall, neigh_wall = random.choice(neighbors)
-                neighbor_cell = self.grid[ny][nx]
+                neighbor_cell = grid[ny][nx]
 
                 # Remove shared walls internally to carve paths
                 setattr(current, curr_wall, False)
@@ -107,17 +138,25 @@ class MazeGenerator:
 
         if not make_perfect:
             self.remove_random_walls(
-                self.grid, self.config.width, self.config.height, factor=0.1
+                grid, self.config.width, self.config.height, factor=0.1
             )
 
-        flat_list = []
-        for row in self.grid:
+        cells_list = []
+        for row in grid:
             for cell in row:
-                flat_list.append(cell)
+                cells_list.append(cell)
 
-        return flat_list
+        path = self._dijkstra(grid, self.config.entry, self.config.exit)
+        if path is not None:
+            for cell in cells_list:
+                if (cell.x, cell.y) in path and cell.state not in [
+                    CellState.ENTRY,
+                    CellState.EXIT,
+                ]:
+                    cell.state = CellState.PATH
+        maze.update_cells(cells_list)
 
-    def remove_random_walls(self, grid, width, height, factor=0.1):
+    def remove_random_walls(self, grid, width, height, factor=0.1) -> None:
         """
         Takes a finished maze and breaks extra walls to create loops.
         """
@@ -148,102 +187,139 @@ class MazeGenerator:
                     current_cell.down = False
                     neighbor.up = False
 
-    # -------------------------------------------------------------
+    def _dijkstra(self, grid, start, end):
+        """
+        grid: 2D list of Cell objects
+        start/end: tuples (x, y)
+        """
+        if not isinstance(grid[0], list):
+            # We assume square or use a known width
+            width = int(sqrt(len(grid)))
+            grid = [grid[i : i + width] for i in range(0, len(grid), width)]
+
+        rows, cols = len(grid), len(grid[0])
+        # pq: (distance, (x, y), path_list)
+        pq = [(0, start, [start])]
+        visited = set()
+
+        while pq:
+            (dist, (cx, cy), path) = heapq.heappop(pq)
+
+            if (cx, cy) == end:
+                return path
+
+            if (cx, cy) in visited:
+                continue
+            visited.add((cx, cy))
+
+            current_cell = grid[cy][cx]
+
+            # Check all 4 directions based on wall status
+            # Note: We move to (nx, ny) only if the wall between is False
+            directions = [
+                (cx, cy - 1, not current_cell.up),
+                (cx, cy + 1, not current_cell.down),
+                (cx - 1, cy, not current_cell.left),
+                (cx + 1, cy, not current_cell.right),
+            ]
+
+            for nx, ny, is_open in directions:
+                if is_open and 0 <= nx < cols and 0 <= ny < rows:
+                    if (nx, ny) not in visited:
+                        heapq.heappush(pq, (dist + 1, (nx, ny), path + [(nx, ny)]))
+
+        return None  # No path found
+        # -------------------------------------------------------------
 
     def gen_grid(self, maze: Maze) -> None:
         """Generate the initial grid structure of the maze.
         Note: Make me less ugly !!
         """
-        for column in range(self.config.height * 2 + 1):
-            y_even = True if column % 2 == 0 else False
-            for row in range(self.config.width * 2 + 1):
-                x_even = True if row % 2 == 0 else False
-                if column == 0 and row == 0:
-                    maze.add_element(
-                        column + maze.y_shift,
-                        row + maze.x_shift,
-                        Tile.LEFT_TOP.value,
-                    )
-                elif column == 0 and row == self.config.width * 2:
-                    maze.add_element(
-                        column + maze.y_shift,
-                        row + maze.x_shift,
-                        Tile.RIGHT_TOP.value,
-                    )
-                elif column == self.config.height * 2 and row == 0:
-                    maze.add_element(
-                        column + maze.y_shift,
-                        row + maze.x_shift,
-                        Tile.LEFT_BOTTOM.value,
-                    )
-                elif column == self.config.height * 2 and row == self.config.width * 2:
-                    maze.add_element(
-                        column + maze.y_shift,
-                        row + maze.x_shift,
-                        Tile.RIGHT_BOTTOM.value,
-                    )
+        h_max = self.config.height * 2
+        w_max = self.config.width * 2
 
-                elif x_even and column == 0:
-                    maze.add_element(
-                        column + maze.y_shift,
-                        row + maze.x_shift,
-                        Tile.T_DOWN.value,
-                    )
-                elif x_even and column == self.config.height * 2:
-                    maze.add_element(
-                        column + maze.y_shift,
-                        row + maze.x_shift,
-                        Tile.T_UP.value,
-                    )
+        for col in range(h_max + 1):
+            for row in range(w_max + 1):
+                # 1. Determine the character
+                shape = None
 
-                elif y_even:
-                    if row == 0:
-                        maze.add_element(
-                            column + maze.y_shift,
-                            row + maze.x_shift,
-                            Tile.T_RIGHT.value,
-                        )
-                    elif row == self.config.width * 2:
-                        maze.add_element(
-                            column + maze.y_shift,
-                            row + maze.x_shift,
-                            Tile.T_LEFT.value,
-                        )
+                # Perfect Corners
+                if (col, row) == (0, 0):
+                    shape = Tile.LEFT_TOP.value
+                elif (col, row) == (0, w_max):
+                    shape = Tile.RIGHT_TOP.value
+                elif (col, row) == (h_max, 0):
+                    shape = Tile.LEFT_BOTTOM.value
+                elif (col, row) == (h_max, w_max):
+                    shape = Tile.RIGHT_BOTTOM.value
 
-                    elif x_even:
-                        maze.add_element(
-                            column + maze.y_shift,
-                            row + maze.x_shift,
-                            Tile.CENTER.value,
-                        )
+                # Top/Bottom Edges (T-Junctions)
+                elif col == 0 and row % 2 == 0:
+                    shape = Tile.T_DOWN.value
+                elif col == h_max and row % 2 == 0:
+                    shape = Tile.T_UP.value
 
-                    else:
-                        maze.add_element(
-                            column + maze.y_shift,
-                            row + maze.x_shift,
-                            Tile.HORIZONTAL.value,
-                        )
+                # Left/Right Edges (T-Junctions)
+                elif row == 0 and col % 2 == 0:
+                    shape = Tile.T_RIGHT.value
+                elif row == w_max and col % 2 == 0:
+                    shape = Tile.T_LEFT.value
 
-                elif not y_even and x_even:
-                    maze.add_element(
-                        column + maze.y_shift,
-                        row + maze.x_shift,
-                        Tile.VERTICAL.value,
-                    )
+                # Internal Grid
+                elif col % 2 == 0:
+                    shape = Tile.CENTER.value if row % 2 == 0 else Tile.HORIZONTAL.value
+                elif row % 2 == 0:
+                    shape = Tile.VERTICAL.value
+
+                # 2. Add to maze (One single call!)
+                if shape:
+                    maze.add_element(col + maze.y_shift, row + maze.x_shift, shape)
 
                 else:
-                    maze.add_element(
-                        column + maze.y_shift,
-                        row + maze.x_shift,
-                        " ",
-                    )
+                    for cell in maze.get_cells():
+
+                        cell_x = self.get_horizontal_cell_pos(cell.x, 0)
+                        cell_y = self.get_vertical_cell_pos(cell.y, 0)
+
+                        if cell_x == row and cell_y == col:
+
+                            if cell.state == CellState.FT:
+                                maze.add_element(
+                                    col + maze.y_shift,
+                                    row + maze.x_shift,
+                                    Tile.BLOCK.value,
+                                )
+                            elif cell.state == CellState.ENTRY:
+                                maze.add_element(
+                                    col + maze.y_shift,
+                                    row + maze.x_shift,
+                                    Tile.ENTER.value,
+                                )
+                            elif cell.state == CellState.EXIT:
+                                maze.add_element(
+                                    col + maze.y_shift,
+                                    row + maze.x_shift,
+                                    Tile.EXIT.value,
+                                )
+                            elif cell.state == CellState.PATH:
+                                maze.add_element(
+                                    col + maze.y_shift,
+                                    row + maze.x_shift,
+                                    Tile.PATH.value,
+                                )
+                            elif cell.state == CellState.REGULAR:
+                                maze.add_element(
+                                    col + maze.y_shift,
+                                    row + maze.x_shift,
+                                    Tile.SPACE.value,
+                                )
 
     def get_horizontal_cell_pos(self, pos: int, x_shift: int) -> int:
-        result: int = (pos * 2) + 1 + x_shift
+        result: int = pos * 2 + 1 + x_shift
         return result
 
     def get_vertical_cell_pos(self, pos: int, y_shift: int) -> int:
-        result: int = (pos * 2) + 1 + y_shift
+        result: int = pos * 2 + 1 + y_shift
         return result
 
     def get_near_element(
@@ -269,7 +345,7 @@ class MazeGenerator:
 
         for el in elements:
             if el.x == target_x and el.y == target_y:
-                return el.sprite
+                return el.shape
         return None
 
     def brake_walls(self, maze: Maze):
@@ -282,13 +358,13 @@ class MazeGenerator:
                     == self.get_vertical_cell_pos(cell.y, maze.y_shift) - 1
                 ):
                     if not cell.up:
-                        element.sprite = " "
+                        element.shape = " "
                 # right
                 if element.x == self.get_horizontal_cell_pos(
                     cell.x, maze.x_shift
                 ) + 1 and element.y == self.get_vertical_cell_pos(cell.y, maze.y_shift):
                     if not cell.right:
-                        element.sprite = " "
+                        element.shape = " "
                 # up and right  for the next cell handel the previes down and left so we dont actily need them
 
     def handel_center(self, element: Element, elements: List[Element]):
@@ -300,7 +376,7 @@ class MazeGenerator:
 
         score = up + down + left + right
 
-        BIT_MAP = {
+        bit_map = {
             1: Tile.SHORT_UP.value,
             2: Tile.SHORT_DOWN.value,
             3: Tile.VERTICAL.value,
@@ -318,24 +394,24 @@ class MazeGenerator:
             15: Tile.CENTER.value,
         }
 
-        element.sprite = BIT_MAP.get(score, " ")
+        element.shape = bit_map.get(score, Tile.SPACE.value)
 
     def handel_corners(self, elements: List[Element]):
         for element in elements:
-            if element.sprite == Tile.CENTER.value:
+            if element.shape == Tile.CENTER.value:
                 self.handel_center(element, elements)
-            if element.sprite == Tile.T_DOWN.value:
+            if element.shape == Tile.T_DOWN.value:
                 if self.get_near_element(element, elements, 2) == " ":
-                    element.sprite = Tile.HORIZONTAL.value
+                    element.shape = Tile.HORIZONTAL.value
 
-            elif element.sprite == Tile.T_UP.value:
+            elif element.shape == Tile.T_UP.value:
                 if self.get_near_element(element, elements, 0) == " ":
-                    element.sprite = Tile.HORIZONTAL.value
+                    element.shape = Tile.HORIZONTAL.value
 
-            elif element.sprite == Tile.T_LEFT.value:
+            elif element.shape == Tile.T_LEFT.value:
                 if self.get_near_element(element, elements, 3) == " ":
-                    element.sprite = Tile.VERTICAL.value
+                    element.shape = Tile.VERTICAL.value
 
-            elif element.sprite == Tile.T_RIGHT.value:
+            elif element.shape == Tile.T_RIGHT.value:
                 if self.get_near_element(element, elements, 1) == " ":
-                    element.sprite = Tile.VERTICAL.value
+                    element.shape = Tile.VERTICAL.value

@@ -12,8 +12,8 @@ class Maze:
         self._elements: List[Element] = list()
         self._cells = list()
 
-    def add_element(self, element_y: int, element_x: int, element_sprite) -> None:
-        self._elements.append(Element(element_y, element_x, element_sprite))
+    def add_element(self, element_y: int, element_x: int, element_shape) -> None:
+        self._elements.append(Element(element_y, element_x, element_shape))
 
     def get_elements(self) -> List[Element]:
         return self._elements
@@ -21,7 +21,7 @@ class Maze:
     def get_cells(self) -> List[Cell]:
         return self._cells
 
-    def update_cells(self, new_cells: List[Cell]):
+    def update_cells(self, new_cells: List[Cell]) -> None:
         self._cells.clear()
         self._elements.clear()
         self._cells = new_cells

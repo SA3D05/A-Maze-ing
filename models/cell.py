@@ -1,3 +1,6 @@
+from .cell_state import CellState
+
+
 class Cell:
     def __init__(
         self,
@@ -7,7 +10,7 @@ class Cell:
         right: bool,
         down: bool,
         left: bool,
-        is_in_42: bool = False,
+        state: CellState = CellState.PATH,
     ) -> None:
         self.y = y
         self.x = x
@@ -15,4 +18,4 @@ class Cell:
         self.right = right
         self.down = down
         self.left = left
-        self.is_in_42 = is_in_42
+        self.state = state
