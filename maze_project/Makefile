@@ -1,7 +1,7 @@
 PYTHON = python3
 PIP = pip3
 
-.PHONY: install run debug clean lint lint-strict
+.PHONY: install run debug clean lint lint-strict build validate
 
 install:
 	$(PIP) install flake8 mypy
@@ -9,14 +9,16 @@ install:
 	$(PIP) install -e .
 
 run:
-	$(PYTHON) a_maze_ing.py
+	PYTHONPATH=. $(PYTHON) app/a_maze_ing.py
 
 debug:
-	$(PYTHON) -m pdb a_maze_ing.py
+	PYTHONPATH=. $(PYTHON) -m pdb app/a_maze_ing.py
 
 clean:
 	rm -rf __pycache__
 	rm -rf .mypy_cache
+	rm -rf *.egg-info
+	rm -rf build/ dist/
 	rm -f maze.txt
 
 build:
@@ -33,4 +35,4 @@ lint-strict:
 	mypy . --strict
 
 validate:
-	$(PYTHON) output_validator.py maze.txt
+	PYTHONPATH=. $(PYTHON) output_validator.py maze.txt

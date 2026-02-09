@@ -2,6 +2,7 @@ import random
 from mazegen.model import Cell
 from imperfect_maze import remove_random_walls
 import time
+# from app.a_maze_ing import 
 
 
 class MazeGenerator:
