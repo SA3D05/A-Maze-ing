@@ -1,14 +1,13 @@
-from models.cell_state import CellState
 from models.maze_config import MazeConfig
+from models.cell_state import CellState
 from models.element import Element
 from models.maze import Maze
 from models.tile import Tile
 from models.cell import Cell
-from typing import List, Optional
+from typing import List
 from math import sqrt
 import random
 import heapq
-from deb import pdeb
 
 
 class MazeGenerator:
@@ -95,15 +94,13 @@ class MazeGenerator:
                     target_y == self.config.entry[0]
                     and target_x == self.config.entry[1]
                 ):
-                    pdeb(
+                    raise ValueError(
                         "Error: The entry or exit point cannot be placed within the protected '42' area."
                     )
-                    exit(1)
                 if target_y == self.config.exit[0] and target_x == self.config.exit[1]:
-                    pdeb(
+                    raise ValueError(
                         "Error: The entry or exit point cannot be placed within the protected '42' area."
                     )
-                    exit(1)
 
                 for cell_list in grid:
                     for cell in cell_list:
