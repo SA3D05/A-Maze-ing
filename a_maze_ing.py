@@ -4,6 +4,7 @@ from curses import window, wrapper, curs_set
 from typing import List
 from random import choice
 from mazegen import *
+from mazegen.file_manager import save_maze
 from sys import argv
 import curses
 
@@ -49,7 +50,6 @@ def main(stdscr: window):
     # --- 2. Load Configuration ---
     config: MazeConfig = MazeConfig()
     try:
-        # Use the 'parse' method from your MazeConfig class
         config.parse(argv[1])
     except Exception:
         pass
@@ -62,7 +62,7 @@ def main(stdscr: window):
     # Center the maze on the screen
     maze_yshift = int((term_height / 2) - (maze_height / 2))
     maze_xshift = int((term_width / 2) - (maze_width / 2))
-    
+
     # Position menu to the right of the maze
     menu_yshift = maze_yshift
     menu_xshift = maze_xshift + maze_width + 4
@@ -80,42 +80,54 @@ def main(stdscr: window):
     sections = ["Generate", "With steps", "Play", "Show/Hide", "Change colours", "Exit"]
     for section in sections:
         menu.add_section(section)
-    
+
     current_color_id = 1
     show_hide = False
     duration = 0.001
 
     rendrer.render_menu(menu)
-    generator.gen_grid(maze) # Initial grid setup
+    generator.gen_grid(maze)  # Initial grid setup
     rendrer.render_maze(maze, duration, current_color_id, show_hide)
 
     # --- 5. Main Interaction Loop ---
     while True:
         key = stdscr.getch()
-        
+
         if key == curses.KEY_RESIZE:
             continue
-            
+
         elif key == ord("\n") or key == curses.KEY_ENTER:
             selected_idx = menu.get_selected_index()
-            
+
             # CASE 0 & 1: GENERATION
             if selected_idx == 0 or selected_idx == 1:
                 rendrer.erase_maze(maze)
                 # RESET MAZE: This ensures old path elements are cleared
                 maze = Maze(maze_yshift, maze_xshift)
-                
+
                 # A. Generate the logic and Dijkstra path
                 generator.generate(maze, config.is_perfect)
-                
-                # B. Map logic to visual characters (including PATH '*')
+
+                # B. Save maze to file (OUTPUT_FILE from config, default maze.txt)
+                output_file = getattr(config, "output_file", "maze.txt")
+                save_maze(
+                    generator.last_grid,
+                    config.width,
+                    config.height,
+                    config.entry,
+                    config.exit,
+                    generator.last_path,
+                    output_file,
+                )
+
+                # C. Map logic to visual characters (including PATH '*')
                 generator.gen_grid(maze)
-                
-                if selected_idx == 0: # Fast Generate
+
+                if selected_idx == 0:  # Fast Generate
                     generator.brake_walls(maze)
                     generator.handel_corners(maze.get_elements())
                     rendrer.render_maze(maze, duration, current_color_id, show_hide)
-                else: # With steps
+                else:  # With steps
                     rendrer.render_maze(maze, duration, current_color_id, show_hide)
                     generator.brake_walls(maze)
                     rendrer.render_maze(maze, duration, current_color_id, show_hide)
@@ -129,23 +141,29 @@ def main(stdscr: window):
                 player = Player(*config.entry, maze.y_shift, maze.x_shift, "@")
                 rendrer.render_maze(maze, duration, current_color_id, show_hide)
                 rendrer.render_player(player)
-                
+
                 while True:
                     last_pos = (player.y, player.x)
                     p_key = stdscr.getch()
-                    if p_key == ord("q") or p_key == ord("Q"): break
+                    if p_key == ord("q") or p_key == ord("Q"):
+                        break
 
                     move_dir = None
-                    if p_key == curses.KEY_UP: move_dir = PlayerDirection.UP
-                    elif p_key == curses.KEY_DOWN: move_dir = PlayerDirection.DOWN
-                    elif p_key == curses.KEY_LEFT: move_dir = PlayerDirection.LEFT
-                    elif p_key == curses.KEY_RIGHT: move_dir = PlayerDirection.RIGHT
+                    if p_key == curses.KEY_UP:
+                        move_dir = PlayerDirection.UP
+                    elif p_key == curses.KEY_DOWN:
+                        move_dir = PlayerDirection.DOWN
+                    elif p_key == curses.KEY_LEFT:
+                        move_dir = PlayerDirection.LEFT
+                    elif p_key == curses.KEY_RIGHT:
+                        move_dir = PlayerDirection.RIGHT
 
                     if move_dir:
                         player.move(move_dir, maze.get_cells())
                         rendrer.render_player(player, last_pos)
 
-                    if (player.y, player.x) == config.exit: break
+                    if (player.y, player.x) == config.exit:
+                        break
                     curses.flushinp()
 
                 show_hide = old_show_hide
@@ -171,8 +189,9 @@ def main(stdscr: window):
         elif key == curses.KEY_UP:
             menu.move_up()
             rendrer.render_menu(menu)
-            
+
         curses.flushinp()
+
 
 if __name__ == "__main__":
     if len(argv) < 2:

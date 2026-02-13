@@ -7,7 +7,7 @@ from .tile import Tile
 
 from heapq import heappop, heappush
 from random import choice, randint
-from typing import List
+from typing import List, Optional
 from math import sqrt
 from random import seed as sync_seed
 
@@ -16,6 +16,7 @@ class MazeGenerator:
 
     def __init__(self, config: MazeConfig):
         self.config: MazeConfig = config
+        self.last_path: Optional[List] = None  # stores the last dijkstra solution
 
     def __get_neighbors(self, x: int, y: int, visited: set):
 
@@ -149,6 +150,9 @@ class MazeGenerator:
                 cells_list.append(cell)
 
         path = self.__dijkstra(grid, self.config.entry, self.config.exit)
+        self.last_path = path  # store path so caller can pass it to save_maze()
+        self.last_grid = grid  # store 2D grid so caller can pass it to save_maze()
+
         if path is not None:
             for cell in cells_list:
                 if (cell.x, cell.y) in path and cell.state not in [
@@ -197,7 +201,7 @@ class MazeGenerator:
         if not isinstance(grid[0], list):
             # We assume square or use a known width
             width = int(sqrt(len(grid)))
-            grid = [grid[i : i + width] for i in range(0, len(grid), width)]
+            grid = [grid[i: i + width] for i in range(0, len(grid), width)]
 
         rows, cols = len(grid), len(grid[0])
         # pq: (distance, (x, y), path_list)
