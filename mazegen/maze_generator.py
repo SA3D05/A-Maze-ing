@@ -1,13 +1,14 @@
-from models.maze_config import MazeConfig
-from models.cell_state import CellState
-from models.element import Element
-from models.maze import Maze
-from models.tile import Tile
-from models.cell import Cell
+from .cell import Cell, CellState
+from .maze import MazeConfig
+from .element import Element
+from .maze import Maze
+from .tile import Tile
+
+
+from heapq import heappop, heappush
+from random import choice, randint
 from typing import List
 from math import sqrt
-import random
-import heapq
 
 
 class MazeGenerator:
@@ -15,7 +16,7 @@ class MazeGenerator:
     def __init__(self, config: MazeConfig):
         self.config: MazeConfig = config
 
-    def _get_neighbors(self, x: int, y: int, visited: set):
+    def __get_neighbors(self, x: int, y: int, visited: set):
 
         neighbors = []
         directions = [
@@ -90,16 +91,15 @@ class MazeGenerator:
                 target_x, target_y = start_x + dx, start_y + dy
 
                 # make this conition less ugly later
+
                 if (
                     target_y == self.config.entry[0]
                     and target_x == self.config.entry[1]
+                ) or (
+                    target_y == self.config.exit[0] and target_x == self.config.exit[1]
                 ):
                     raise ValueError(
-                        "Error: The entry or exit point cannot be placed within the protected '42' area."
-                    )
-                if target_y == self.config.exit[0] and target_x == self.config.exit[1]:
-                    raise ValueError(
-                        "Error: The entry or exit point cannot be placed within the protected '42' area."
+                        "The entry or exit point cannot be placed within the protected '42' area."
                     )
 
                 for cell_list in grid:
@@ -118,10 +118,10 @@ class MazeGenerator:
         stack.append(grid[0][0])
         while stack:
             current = stack[-1]
-            neighbors = self._get_neighbors(current.x, current.y, visited)
+            neighbors = self.__get_neighbors(current.x, current.y, visited)
 
             if neighbors:
-                nx, ny, curr_wall, neigh_wall = random.choice(neighbors)
+                nx, ny, curr_wall, neigh_wall = choice(neighbors)
                 neighbor_cell = grid[ny][nx]
 
                 # Remove shared walls internally to carve paths
@@ -134,7 +134,7 @@ class MazeGenerator:
                 stack.pop()
 
         if not make_perfect:
-            self.remove_random_walls(
+            self.__remove_random_walls(
                 grid, self.config.width, self.config.height, factor=0.1
             )
 
@@ -143,7 +143,7 @@ class MazeGenerator:
             for cell in row:
                 cells_list.append(cell)
 
-        path = self._dijkstra(grid, self.config.entry, self.config.exit)
+        path = self.__dijkstra(grid, self.config.entry, self.config.exit)
         if path is not None:
             for cell in cells_list:
                 if (cell.x, cell.y) in path and cell.state not in [
@@ -153,7 +153,7 @@ class MazeGenerator:
                     cell.state = CellState.PATH
         maze.update_cells(cells_list)
 
-    def remove_random_walls(self, grid, width, height, factor=0.1) -> None:
+    def __remove_random_walls(self, grid, width, height, factor=0.1) -> None:
         """
         Takes a finished maze and breaks extra walls to create loops.
         """
@@ -168,12 +168,12 @@ class MazeGenerator:
         extra_openings = int((width * height) * factor)
 
         for _ in range(extra_openings):
-            x = random.randint(0, width - 2)
-            y = random.randint(0, height - 2)
+            x = randint(0, width - 2)
+            y = randint(0, height - 2)
 
             current_cell = grid[y][x]
 
-            if random.choice(["right", "down"]) == "right":
+            if choice(["right", "down"]) == "right":
                 neighbor = grid[y][x + 1]
                 if not is_protected(x, y) and not is_protected(x + 1, y):
                     current_cell.right = False
@@ -184,7 +184,7 @@ class MazeGenerator:
                     current_cell.down = False
                     neighbor.up = False
 
-    def _dijkstra(self, grid, start, end):
+    def __dijkstra(self, grid, start, end):
         """
         grid: 2D list of Cell objects
         start/end: tuples (x, y)
@@ -200,7 +200,7 @@ class MazeGenerator:
         visited = set()
 
         while pq:
-            (dist, (cx, cy), path) = heapq.heappop(pq)
+            (dist, (cx, cy), path) = heappop(pq)
 
             if (cx, cy) == end:
                 return path
@@ -223,7 +223,7 @@ class MazeGenerator:
             for nx, ny, is_open in directions:
                 if is_open and 0 <= nx < cols and 0 <= ny < rows:
                     if (nx, ny) not in visited:
-                        heapq.heappush(pq, (dist + 1, (nx, ny), path + [(nx, ny)]))
+                        heappush(pq, (dist + 1, (nx, ny), path + [(nx, ny)]))
 
         return None  # No path found
         # -------------------------------------------------------------

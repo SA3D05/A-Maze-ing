@@ -1,30 +1,31 @@
-from typing import Optional, Tuple
-from models.player import Player
-from models.maze import Maze
-from models.menu import Menu
-import curses
-import time
+from .player import Player
+from .tile import Tile
+from .maze import Maze
+from .menu import Menu
 
-from models.tile import Tile
+
+from curses import window, color_pair
+from typing import Optional, Tuple
+from time import sleep
 
 
 class Rendrer:
-    def __init__(self, stdscr: curses.window) -> None:
-        self.stdscr: curses.window = stdscr
+    def __init__(self, stdscr: window) -> None:
+        self.stdscr: window = stdscr
 
     def render_maze(self, maze: Maze, duration: float, color_id: int, show_path: bool):
         for element in maze.get_elements():
 
-            current_attr = curses.color_pair(color_id)
+            current_attr = color_pair(color_id)
             match element.shape:
                 case Tile.BLOCK.value:
-                    current_attr = curses.color_pair(color_id + 1)
+                    current_attr = color_pair(color_id + 1)
                 case Tile.PATH.value:
-                    current_attr = curses.color_pair(color_id + 2)
+                    current_attr = color_pair(color_id + 2)
                 case Tile.ENTER.value:
-                    current_attr = curses.color_pair(color_id + 3)
+                    current_attr = color_pair(color_id + 3)
                 case Tile.EXIT.value:
-                    current_attr = curses.color_pair(color_id + 4)
+                    current_attr = color_pair(color_id + 4)
 
             if show_path and element.shape == Tile.PATH.value:
                 self.stdscr.addch(
@@ -45,10 +46,17 @@ class Rendrer:
                     current_attr,
                 )
             self.stdscr.refresh()
-            time.sleep(duration)
+            sleep(duration)
 
-        self.stdscr.refresh()
-        time.sleep(duration)
+    def erase_maze(self, maze: Maze):
+        for element in maze.get_elements():
+            self.stdscr.addch(
+                element.y,
+                element.x,
+                " ",
+            )
+            sleep(0.001)
+            self.stdscr.refresh()
 
     def render_player(self, player: Player, last_pos: Optional[Tuple[int, int]] = None):
 

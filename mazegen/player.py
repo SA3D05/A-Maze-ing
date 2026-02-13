@@ -1,6 +1,7 @@
+from .cell import Cell
+
 from enum import Enum
 from typing import List
-from models.cell import Cell
 
 
 class PlayerDirection(Enum):
