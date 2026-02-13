@@ -9,6 +9,7 @@ from heapq import heappop, heappush
 from random import choice, randint
 from typing import List
 from math import sqrt
+from random import seed as sync_seed
 
 
 class MazeGenerator:
@@ -42,6 +43,10 @@ class MazeGenerator:
         take maze object and update its cells with new generated ones.
         """
 
+        if self.config.seed_val == "Random/System Time":
+            sync_seed(None)
+        else:
+            sync_seed(self.config.seed_val)
         grid: List[List[Cell]] = []
         for y in range(self.config.height):
             row: List[Cell] = []

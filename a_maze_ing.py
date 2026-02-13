@@ -43,152 +43,127 @@ def main(stdscr: window):
     curses.init_color(44, 700, 300, 1000)  # Bright Violet
 
     curses.use_default_colors()
-
     for i in range(25):
         curses.init_pair(i + 1, 20 + i, -1)
 
-    sections: List[str] = [
-        "Generate",
-        "With steps",
-        "Play",
-        "Show/Hide",
-        "Change colours",
-        "Exit",
-    ]
-
+    # --- 2. Load Configuration ---
     config: MazeConfig = MazeConfig()
+    try:
+        # Use the 'parse' method from your MazeConfig class
+        config.parse(argv[1])
+    except Exception:
+        pass
 
-    # use that if parsing comleet
-    # try:
-    #     config.parse_config("config.txt")
-    # except Exception as e:
-    #     print(f"[Config error]: {e}")
-    #     exit(1)
-
+    # --- 3. Dynamic UI Positioning ---
     term_height, term_width = stdscr.getmaxyx()
-
     maze_height = config.height * 2 + 1
     maze_width = config.width * 2 + 1
 
-    menu_yshift = int((term_height / 2) - (maze_height / 2))
-    menu_xshift = int((term_width / 1.5))
-
+    # Center the maze on the screen
     maze_yshift = int((term_height / 2) - (maze_height / 2))
-    maze_xshift = int((term_width / 2) - (maze_width))
+    maze_xshift = int((term_width / 2) - (maze_width / 2))
+    
+    # Position menu to the right of the maze
+    menu_yshift = maze_yshift
+    menu_xshift = maze_xshift + maze_width + 4
 
-    # check if terminal size perfict for rendring without errors
-    if maze_width + 2 > term_width / 2:  # if terminal pass maze + sections
-        raise Exception("Terminal size not enugh to draw the maze!")
+    # Sanity check for terminal size
+    if maze_width + 30 > term_width or maze_height + 4 > term_height:
+        raise Exception("Terminal size too small for this configuration!")
 
-    if 3 * len(sections) + 4 > term_height:  # if terminal pass sections
-        raise Exception("Terminal size not enugh to draw the maze!")
-
-    if maze_height + 4 > term_height:  # if terminal pass maze
-        raise Exception("Terminal size not enugh to draw the maze!")
-
+    # --- 4. Initialize Objects ---
     menu = Menu(menu_yshift, menu_xshift)
     rendrer = Rendrer(stdscr)
     generator = MazeGenerator(config)
     maze = Maze(maze_yshift, maze_xshift)
 
+    sections = ["Generate", "With steps", "Play", "Show/Hide", "Change colours", "Exit"]
+    for section in sections:
+        menu.add_section(section)
+    
     current_color_id = 1
     show_hide = False
     duration = 0.001
-    for section in sections:
-        menu.add_section(section)
-    rendrer.render_menu(menu)
 
-    generator.gen_grid(maze)
+    rendrer.render_menu(menu)
+    generator.gen_grid(maze) # Initial grid setup
     rendrer.render_maze(maze, duration, current_color_id, show_hide)
 
+    # --- 5. Main Interaction Loop ---
     while True:
         key = stdscr.getch()
+        
         if key == curses.KEY_RESIZE:
-            raise Exception("Please do not resize the terminal or i will kill you")
-        elif key == ord("\n"):
-            match menu.get_selected_index():
-                # generate
-                case 0:
-                    generator.generate(maze, config.is_perfect)
-                    generator.gen_grid(maze)
+            continue
+            
+        elif key == ord("\n") or key == curses.KEY_ENTER:
+            selected_idx = menu.get_selected_index()
+            
+            # CASE 0 & 1: GENERATION
+            if selected_idx == 0 or selected_idx == 1:
+                rendrer.erase_maze(maze)
+                # RESET MAZE: This ensures old path elements are cleared
+                maze = Maze(maze_yshift, maze_xshift)
+                
+                # A. Generate the logic and Dijkstra path
+                generator.generate(maze, config.is_perfect)
+                
+                # B. Map logic to visual characters (including PATH '*')
+                generator.gen_grid(maze)
+                
+                if selected_idx == 0: # Fast Generate
                     generator.brake_walls(maze)
                     generator.handel_corners(maze.get_elements())
                     rendrer.render_maze(maze, duration, current_color_id, show_hide)
-
-                # generate with steps
-                case 1:
-                    rendrer.erase_maze(maze)
-                    generator.generate(maze, config.is_perfect)
-                    generator.gen_grid(maze)
+                else: # With steps
                     rendrer.render_maze(maze, duration, current_color_id, show_hide)
                     generator.brake_walls(maze)
                     rendrer.render_maze(maze, duration, current_color_id, show_hide)
                     generator.handel_corners(maze.get_elements())
                     rendrer.render_maze(maze, duration, current_color_id, show_hide)
 
-                # play
-                case 2:
+            # CASE 2: PLAY MODE
+            elif selected_idx == 2:
+                old_show_hide = show_hide
+                show_hide = False
+                player = Player(*config.entry, maze.y_shift, maze.x_shift, "@")
+                rendrer.render_maze(maze, duration, current_color_id, show_hide)
+                rendrer.render_player(player)
+                
+                while True:
+                    last_pos = (player.y, player.x)
+                    p_key = stdscr.getch()
+                    if p_key == ord("q") or p_key == ord("Q"): break
 
-                    old_show_hide = show_hide
-                    show_hide = False
-                    player = Player(
-                        *config.entry,
-                        maze.y_shift,
-                        maze.x_shift,
-                        "@",
-                    )
-                    rendrer.render_maze(maze, duration, current_color_id, show_hide)
-                    rendrer.render_player(player)
-                    while True:
-                        last_player_pos = (player.y, player.x)
-                        player_key = stdscr.getch()
-                        if player_key == curses.KEY_RESIZE:
-                            raise Exception(
-                                "Please do not resize the terminal or i will kill you"
-                            )
+                    move_dir = None
+                    if p_key == curses.KEY_UP: move_dir = PlayerDirection.UP
+                    elif p_key == curses.KEY_DOWN: move_dir = PlayerDirection.DOWN
+                    elif p_key == curses.KEY_LEFT: move_dir = PlayerDirection.LEFT
+                    elif p_key == curses.KEY_RIGHT: move_dir = PlayerDirection.RIGHT
 
-                        elif player_key == ord("q") or player_key == ord("Q"):
-                            break
+                    if move_dir:
+                        player.move(move_dir, maze.get_cells())
+                        rendrer.render_player(player, last_pos)
 
-                        elif player_key == curses.KEY_UP:
+                    if (player.y, player.x) == config.exit: break
+                    curses.flushinp()
 
-                            player.move(PlayerDirection.UP, maze.get_cells())
-                            rendrer.render_player(player, last_player_pos)
+                show_hide = old_show_hide
+                rendrer.render_maze(maze, duration, current_color_id, show_hide)
 
-                        elif player_key == curses.KEY_DOWN:
-                            player.move(PlayerDirection.DOWN, maze.get_cells())
-                            rendrer.render_player(player, last_player_pos)
+            # CASE 3: SHOW/HIDE SOLUTION
+            elif selected_idx == 3:
+                show_hide = not show_hide
+                rendrer.render_maze(maze, 0, current_color_id, show_hide)
 
-                        elif player_key == curses.KEY_LEFT:
-                            player.move(PlayerDirection.LEFT, maze.get_cells())
-                            rendrer.render_player(player, last_player_pos)
+            # CASE 4: CHANGE COLOR
+            elif selected_idx == 4:
+                current_color_id = choice([1, 6, 11, 16, 21])
+                rendrer.render_maze(maze, 0, current_color_id, show_hide)
 
-                        elif player_key == curses.KEY_RIGHT:
-                            player.move(PlayerDirection.RIGHT, maze.get_cells())
-                            rendrer.render_player(player, last_player_pos)
-
-                        if (player.y, player.x) == config.exit:
-                            break
-                        curses.flushinp()
-
-                    show_hide = old_show_hide
-                    rendrer.render_maze(maze, duration, current_color_id, show_hide)
-
-                # show/hide
-                case 3:
-                    show_hide = not show_hide
-                    rendrer.render_maze(maze, duration, current_color_id, show_hide)
-
-                # change color
-                case 4:
-                    old_color = current_color_id
-                    while current_color_id is old_color:
-                        current_color_id = choice([1, 5, 10, 15, 20])
-                    rendrer.render_maze(maze, duration, current_color_id, show_hide)
-
-                # Exit
-                case 5:
-                    break
+            # CASE 5: EXIT
+            elif selected_idx == 5:
+                break
 
         elif key == curses.KEY_DOWN:
             menu.move_down()
@@ -196,25 +171,11 @@ def main(stdscr: window):
         elif key == curses.KEY_UP:
             menu.move_up()
             rendrer.render_menu(menu)
+            
         curses.flushinp()
 
-
 if __name__ == "__main__":
-
-    try:
-        if len(argv) < 2:
-            raise KeyboardInterrupt("Missing config file")
-        elif len(argv) > 2:
-            raise Exception("Too many arguments")
-    except Exception as e:
-        print(f"[Arguments error]: {e}")
+    if len(argv) < 2:
+        print("Usage: python3 a_maze_ing.py config.txt")
         exit(1)
-
-    try:
-        wrapper(main)
-    except KeyboardInterrupt:
-        print("Exit the program")
-    except curses.error as e:
-        print(f"[Curses error]: {e}")
-    except BaseException as e:
-        print(f"[Error]: {e}")
+    wrapper(main)
