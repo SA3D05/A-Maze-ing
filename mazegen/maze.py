@@ -1,3 +1,4 @@
+import sys
 from .element import Element
 from .cell import Cell
 
@@ -10,16 +11,16 @@ class MazeConfig:
         self,
     ) -> None:
 
-        self.height: int = 10
-        self.width: int = 10
-        self.entry: Tuple[int, int] = (0, 0)
-        self.exit: Tuple[int, int] = (1, 1)
+        self.height: int = 0
+        self.width: int = 0
+        self.entry: Tuple[int, int] = (-1, -1)
+        self.exit: Tuple[int, int] = (-1, -1)
         self.output: str = "output.txt"
         self.is_perfect: bool = True
         self.seed_val: str = "Random/System Time"
 
     def parse(self, filename: str) -> None:
-        raw_config = {}
+        row_config = {}
         with open(filename, "r") as fd:
             for line in fd:
                 line = line.strip()
@@ -28,16 +29,22 @@ class MazeConfig:
                     continue
                 if "=" in line:
                     key, value = line.split("=", 1)
-                    raw_config[key.strip().upper()] = value.strip()
+                    row_config[key.strip().upper()] = value.strip()
 
-        self.width = int(raw_config.get("WIDTH", self.width))
-        self.height = int(raw_config.get("HEIGHT", self.height))
+        # if ["width", "height", "enter", "exit"]:
+        #     raise Exception("9ad config file")
 
-        perf_str = raw_config.get("PERFECT", "TRUE").upper()
+        self.width = int(row_config.get("WIDTH", -1))
+        self.height = int(row_config.get("HEIGHT", -1))
+
+        if self.width < 9 or self.height < 7:
+            raise Exception()
+
+        perf_str = row_config.get("PERFECT", "TRUE").upper()
         self.is_perfect = perf_str == "TRUE"
 
         # --- SEED LOGIC ---
-        raw_seed = raw_config.get("SEED")
+        raw_seed = row_config.get("SEED")
         if raw_seed:
             # If a seed exists in config, use it
             self.seed_val = raw_seed
@@ -48,10 +55,10 @@ class MazeConfig:
             self.seed_val = "Random/System Time"
             set_random_seed(None)
 
-        self.entry = self._get_safe_coords(raw_config, "ENTRY", 0, 0)
-        self.exit = self._get_safe_coords(
-            raw_config, "EXIT", self.width - 1, self.height - 1
-        )
+        self.entry = self._get_safe_coords(row_config, "ENTRY", -1, -1)
+        self.exit = self._get_safe_coords(row_config, "EXIT", -1, -1)
+        if self.entry == self.exit or -1 in self.entry or -1 in self.exit:
+            raise Exception()
 
     def _get_safe_coords(self, config_dict, key, def_x, def_y) -> Tuple[int, int]:
         val = config_dict.get(key)

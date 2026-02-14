@@ -13,7 +13,6 @@ import curses
 class MazeApp:
     def __init__(self) -> None:
         self.error = None
-        self.config = MazeConfig()
         try:
             if len(argv) < 2:
                 raise Exception("Missing config file")
@@ -24,12 +23,10 @@ class MazeApp:
             exit()
 
         try:
+            self.config = MazeConfig()
             self.config.parse(argv[1])
-        except FileNotFoundError:
-            print(f"the configfile '{argv[1]}' not found")
-            exit()
-        except PermissionError:
-            print(f"the configfile '{argv[1]}' has not permission")
+        except Exception:
+            print("Config file error")
             exit()
 
         self.sections: List[str] = [
