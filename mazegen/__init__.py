@@ -6,6 +6,7 @@ from .cell import Cell, CellState
 from .renderer import Rendrer
 from .element import Element
 from .tile import Tile
+from .maze_app import MazeApp
 
 
 __version__ = "1.0.0"
@@ -24,4 +25,5 @@ __all__ = [
     "Maze",
     "Player",
     "PlayerDirection",
+    "MazeApp",
 ]

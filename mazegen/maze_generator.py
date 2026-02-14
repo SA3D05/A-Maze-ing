@@ -7,7 +7,8 @@ from .tile import Tile
 
 from heapq import heappop, heappush
 from random import choice, randint
-from typing import List
+from typing import List, Tuple
+from random import seed as sync_seed
 from math import sqrt
 
 
@@ -15,6 +16,66 @@ class MazeGenerator:
 
     def __init__(self, config: MazeConfig):
         self.config: MazeConfig = config
+        self.last_path: List = []
+        self.last_grid: List = []
+
+    def save_maze(
+        self,
+        grid: List[List[Cell]],
+        width: int,
+        height: int,
+        entry: Tuple[int, int],
+        exit_pt: Tuple[int, int],
+        path_coords: List[Tuple[int, int]],
+        filename: str = "maze.txt",
+    ) -> None:
+        """
+        Saves maze structure (Hex), Entry/Exit, and Path Solution to a file.
+        Weights: North=1, East=2, South=4, West=8.
+        """
+        try:
+            with open(filename, "w") as f:
+                # 1. Write the Maze Structure Rows
+                for y in range(height):
+                    row_hex = ""
+                    for x in range(width):
+                        cell = grid[y][x]
+                        val = 0
+                        # Match the attributes in your model.py: up, right, down, left
+                        if cell.up:
+                            val += 1
+                        if cell.right:
+                            val += 2
+                        if cell.down:
+                            val += 4
+                        if cell.left:
+                            val += 8
+                        row_hex += f"{val:X}"
+                    f.write(f"{row_hex}\n")
+
+                f.write("\n")  # Blank line separator
+
+                # 2. Write Entry and Exit
+                f.write(f"{entry[0]},{entry[1]}\n")
+                f.write(f"{exit_pt[0]},{exit_pt[1]}\n\n")
+
+                # 3. Write Path Solution as a single long Hex mask
+                path_hex = self.__encode_path_mask(width, height, path_coords)
+                f.write(f"{path_hex}\n")
+
+        except Exception as e:
+            # Using print here as a fallback if pdeb isn't imported
+            print(f"[File Error]: {e}")
+
+    def __encode_path_mask(
+        self, width: int, height: int, path_coords: List[Tuple[int, int]]
+    ) -> str:
+        bit_string = ""
+        path_set = set(path_coords)
+        for y in range(height):
+            for x in range(width):
+                bit_string += "1" if (x, y) in path_set else "0"
+        return f"{int(bit_string, 2):X}" if bit_string else "0"
 
     def __get_neighbors(self, x: int, y: int, visited: set):
 
@@ -41,6 +102,10 @@ class MazeGenerator:
         """Recursive Backtracking to create a perfect maze.
         take maze object and update its cells with new generated ones.
         """
+        if self.config.seed_val == "Random/System Time":
+            sync_seed(None)
+        else:
+            sync_seed(self.config.seed_val)
 
         grid: List[List[Cell]] = []
         for y in range(self.config.height):
@@ -144,6 +209,9 @@ class MazeGenerator:
                 cells_list.append(cell)
 
         path = self.__dijkstra(grid, self.config.entry, self.config.exit)
+        self.last_path = path  # type: ignore # store path so caller can pass it to save_maze()
+        self.last_grid = grid
+
         if path is not None:
             for cell in cells_list:
                 if (cell.x, cell.y) in path and cell.state not in [

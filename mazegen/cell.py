@@ -27,3 +27,8 @@ class Cell:
         self.down = down
         self.left = left
         self.state = state
+
+
+def test():
+    # """This functions prints: 'Hello'"""
+    print("Hello")
