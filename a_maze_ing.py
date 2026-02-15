@@ -1,9 +1,8 @@
 #!/usr/bin/python3
 
-
-from app import MazeApp
+import app.maze_app
 
 if __name__ == "__main__":
 
-    mazeing = MazeApp()
+    mazeing = app.maze_app.MazeApp()
     mazeing.run()

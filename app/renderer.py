@@ -1,7 +1,7 @@
-from .player import Player
+from app.player import Player
+from app.menu import Menu
 from mazegen.tile import Tile
 from mazegen.maze import Maze
-from .menu import Menu
 
 
 from curses import window, color_pair
@@ -11,17 +11,17 @@ from time import sleep
 
 class Rendrer:
     """Handles rendering of maze, player, and menu elements to the terminal.
-    
+
     This class manages all visual output for the maze application using curses,
     including maze layout, player position, and menu interface.
-    
+
     Attributes:
         stdscr (window): The curses window object for terminal output.
     """
-    
+
     def __init__(self, stdscr: window) -> None:
         """Initialize the Renderer with a curses window.
-        
+
         Args:
             stdscr (window): The curses window object to render output to.
         """
@@ -31,10 +31,10 @@ class Rendrer:
         self, maze: Maze, duration: float, color_id: int, show_path: bool
     ) -> None:
         """Render the maze to the terminal with optional colored output.
-        
+
         Draws each element of the maze with appropriate colors and delays,
         optionally showing or hiding the solution path.
-        
+
         Args:
             maze (Maze): The maze object containing elements to render.
             duration (float): Sleep duration (in seconds) between rendering each element.
@@ -77,7 +77,7 @@ class Rendrer:
 
     def erase_maze(self, maze: Maze) -> None:
         """Clear the maze from the terminal by rendering spaces over it.
-        
+
         Args:
             maze (Maze): The maze object containing elements to erase.
         """
@@ -96,7 +96,7 @@ class Rendrer:
         last_pos: Optional[Tuple[int, int]] = None,
     ) -> None:
         """Render the player at its current position and erase it from the last position.
-        
+
         Args:
             player (Player): The player object to render.
             last_pos (Optional[Tuple[int, int]]): The previous (y, x) position of the player.
@@ -117,7 +117,7 @@ class Rendrer:
 
     def render_menu(self, menu: Menu) -> None:
         """Render the menu and all its sections to the terminal.
-        
+
         Args:
             menu (Menu): The menu object containing sections to render.
         """

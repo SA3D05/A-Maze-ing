@@ -1,6 +1,6 @@
-from .player import Player, PlayerDirection
-from .renderer import Rendrer
-from .menu import Menu
+from app.player import Player, PlayerDirection
+from app.renderer import Rendrer
+from app.menu import Menu
 from mazegen.maze_generator import MazeGenerator
 from mazegen.maze import Maze, MazeConfig
 
@@ -12,18 +12,18 @@ import curses
 
 class MazeApp:
     """Main application class for the interactive maze generator and player.
-    
+
     This class manages the curses terminal interface, menu navigation, maze generation,
     and player interaction within the maze. It coordinates all components of the
     maze application including rendering, generation, and user input handling.
     """
-    
+
     def __init__(self) -> None:
         """Initialize the MazeApp and set up the curses terminal interface.
-        
+
         Parses configuration from command-line arguments, initializes curses,
         calculates terminal layout, and creates the menu, maze, and renderer.
-        
+
         Raises:
             SystemExit: If configuration file is missing, invalid, or terminal is too small.
         """
@@ -89,7 +89,9 @@ class MazeApp:
 
         self.menu: Menu = Menu(self.menu_yshift, self.menu_xshift)
         self.rendrer: Rendrer = Rendrer(self.stdscr)
-        self.generator: MazeGenerator = MazeGenerator(self.config)
+        self.generator: MazeGenerator = MazeGenerator(
+            self.config.height, self.config.width
+        )
         self.maze: Maze = Maze(self.maze_yshift, self.maze_xshift)
 
         for section in self.sections:
@@ -101,7 +103,7 @@ class MazeApp:
 
     def run(self) -> None:
         """Start the main application loop.
-        
+
         Displays the menu and enters the main event loop, handling user input for
         maze generation, stepping through generation, player mode, path toggling,
         color changing, and application exit. Gracefully handles terminal errors
@@ -126,15 +128,20 @@ class MazeApp:
                         case 0:
                             self.running = True
                             self.rendrer.erase_maze(self.maze)
-                            self.generator.generate(self.maze, self.config.is_perfect)
+                            self.generator.generate(
+                                self.config.is_perfect,
+                                self.maze,
+                                self.config.entry,
+                                self.config.exit,
+                            )
                             output_file = getattr(
                                 self.config, "output_file", "maze.txt"
                             )
 
                             self.generator.save_maze(
                                 self.generator.last_grid,
-                                self.config.width,
                                 self.config.height,
+                                self.config.width,
                                 self.config.entry,
                                 self.config.exit,
                                 self.generator.last_path,
@@ -156,8 +163,10 @@ class MazeApp:
                             self.running = True
                             self.rendrer.erase_maze(self.maze)
                             self.generator.generate(
-                                self.maze,
                                 self.config.is_perfect,
+                                self.maze,
+                                self.config.entry,
+                                self.config.exit,
                             )
                             self.generator.gen_grid(self.maze)
                             self.rendrer.render_maze(
@@ -296,7 +305,7 @@ class MazeApp:
 
     def __setup_curses(self) -> None:
         """Initialize the curses terminal environment.
-        
+
         Sets up terminal modes, color pairs, and custom colors for the maze
         visualization. Configures the curses library for interactive input and
         custom color support.
@@ -344,7 +353,7 @@ class MazeApp:
 
     def __dispose_curses(self) -> None:
         """Clean up and restore the terminal to its normal state.
-        
+
         Disables curses mode and returns the terminal to normal operation.
         Should be called before exiting the application.
         """
