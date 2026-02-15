@@ -4,7 +4,8 @@ class Element:
     Attributes:
         y (int): The y-coordinate (row) position of the element.
         x (int): The x-coordinate (column) position of the element.
-        shape (str): The character or string representation of the element's visual appearance.
+        shape (str):The character or string representation of
+        the element's visual appearance.
     """
 
     def __init__(
@@ -14,7 +15,6 @@ class Element:
         shape: str,
     ):
         """Initialize an Element at a specific position with a visual shape.
-        
         Args:
             y (int): The y-coordinate (row) position.
             x (int): The x-coordinate (column) position.

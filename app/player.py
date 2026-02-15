@@ -6,7 +6,6 @@ from typing import List
 
 class PlayerDirection(Enum):
     """Enumeration of player movement directions.
-    
     Attributes:
         UP: Move upward (value: 0).
         DOWN: Move downward (value: 1).
@@ -21,7 +20,6 @@ class PlayerDirection(Enum):
 
 class Player:
     """Represents a player entity in the maze.
-    
     Attributes:
         y (int): The row coordinate of the player.
         x (int): The column coordinate of the player.
@@ -30,9 +28,9 @@ class Player:
         shape (str): The character used to represent the player visually.
     """
 
-    def __init__(self, y: int, x: int, y_shift: int, x_shift: int, shape: str) -> None:
+    def __init__(self, y: int, x: int, y_shift: int,
+                 x_shift: int, shape: str) -> None:
         """Initialize a new Player instance.
-        
         Args:
             y (int): The initial row coordinate.
             x (int): The initial column coordinate.
@@ -48,13 +46,13 @@ class Player:
 
     def move(self, direction: PlayerDirection, maze_cells: List[Cell]) -> None:
         """Move the player in the specified direction if not blocked by a wall.
-        
         Checks if there is an open path in the given direction and updates the
         player's position accordingly. Movement is constrained by maze walls.
-        
         Args:
-            direction (PlayerDirection): The direction to move (UP, DOWN, LEFT, RIGHT).
-            maze_cells (List[Cell]): List of all cells in the maze used for validation.
+            direction (PlayerDirection):
+            The direction to move (UP, DOWN, LEFT, RIGHT).
+            maze_cells (List[Cell]):
+            List of all cells in the maze used for validation.
         """
         for cell in maze_cells:
             if (cell.y, cell.x) == (self.y, self.x):

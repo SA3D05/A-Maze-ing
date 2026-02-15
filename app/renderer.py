@@ -1,8 +1,8 @@
-from app.player import Player
-from app.menu import Menu
+from .player import Player
+from .menu import Menu
+
 from mazegen.tile import Tile
 from mazegen.maze import Maze
-
 
 from curses import window, color_pair
 from typing import Optional, Tuple
@@ -36,10 +36,14 @@ class Rendrer:
         optionally showing or hiding the solution path.
 
         Args:
-            maze (Maze): The maze object containing elements to render.
-            duration (float): Sleep duration (in seconds) between rendering each element.
-            color_id (int): The base color pair ID for rendering.
-            show_path (bool): Whether to display the solution path.
+            maze (Maze):
+            The maze object containing elements to render.
+            duration (float):
+            Sleep duration (in seconds) between rendering each element.
+            color_id (int):
+            The base color pair ID for rendering.
+            show_path (bool):
+            Whether to display the solution path.
         """
         for element in maze.get_elements():
 
@@ -95,11 +99,13 @@ class Rendrer:
         player: Player,
         last_pos: Optional[Tuple[int, int]] = None,
     ) -> None:
-        """Render the player at its current position and erase it from the last position.
+        """Render the player at its current position and
+        erase it from the last position.
 
         Args:
             player (Player): The player object to render.
-            last_pos (Optional[Tuple[int, int]]): The previous (y, x) position of the player.
+            last_pos (Optional[Tuple[int, int]]):
+            The previous (y, x) position of the player.
                 If provided, that position will be cleared. Defaults to None.
         """
         if last_pos is not None:

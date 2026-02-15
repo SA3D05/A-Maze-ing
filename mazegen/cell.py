@@ -29,7 +29,8 @@ class Cell:
         right (bool): Whether there is a wall on the right side of the cell.
         down (bool): Whether there is a wall on the bottom side of the cell.
         left (bool): Whether there is a wall on the left side of the cell.
-        state (CellState): The current state of the cell (default: CellState.PATH).
+        state (CellState):
+        The current state of the cell (default: CellState.PATH).
     Args:
         x (int): The row coordinate of the cell.
         y (int): The column coordinate of the cell.
@@ -37,7 +38,8 @@ class Cell:
         right (bool): Indicates if the cell has a wall pointing right.
         down (bool): Indicates if the cell has a wall pointing downward.
         left (bool): Indicates if the cell has a wall pointing left.
-        state (CellState): The initial state of the cell. Defaults to CellState.PATH.
+        state (CellState):
+        The initial state of the cell. Defaults to CellState.PATH.
     """
 
     def __init__(
@@ -51,7 +53,6 @@ class Cell:
         state: CellState = CellState.PATH,
     ) -> None:
         """Initialize a Cell with position, walls, and state.
-        
         Args:
             y (int): The row coordinate of the cell.
             x (int): The column coordinate of the cell.
@@ -59,7 +60,8 @@ class Cell:
             right (bool): Whether there is a wall on the right side.
             down (bool): Whether there is a wall on the bottom side.
             left (bool): Whether there is a wall on the left side.
-            state (CellState): The state of the cell. Defaults to CellState.PATH.
+            state (CellState): The state of the cell.
+            Defaults to CellState.PATH.
         """
         self.y: int = y
         self.x: int = x

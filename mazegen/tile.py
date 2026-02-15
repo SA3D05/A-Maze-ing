@@ -3,7 +3,6 @@ from enum import Enum
 
 class Tile(Enum):
     """Enumeration of tile characters used for rendering maze elements.
-    
     Attributes:
         VERTICAL: Vertical line character.
         HORIZONTAL: Horizontal line character.

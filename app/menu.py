@@ -7,7 +7,8 @@ from typing import List
 class MenuSection:
     """
     A class representing a section of a menu with a bordered box layout.
-    This class manages the visual representation of a menu section, including its position,
+    This class manages the visual representation of a menu section,
+    including its position,
     selection state, and the elements that compose its border and structure.
     Attributes:
         text (str): The text content displayed in the menu section.
@@ -15,7 +16,8 @@ class MenuSection:
         index (int): The index position of this menu section.
         v_shift (int): Vertical shift offset for positioning elements.
         h_shift (int): Horizontal shift offset for positioning elements.
-        elements (List[Element]): Internal list of elements that make up the menu section.
+        elements (List[Element]):
+        Internal list of elements that make up the menu section.
         width (int): The width of the menu section (default: 22).
         height (int): The height of the menu section (default: 3).
     """
@@ -24,7 +26,6 @@ class MenuSection:
         self, text: str, index: int, selected: bool, v_shift: int, h_shift: int
     ) -> None:
         """Initialize a MenuSection.
-        
         Args:
             text (str): The text to display in the menu section.
             index (int): The index position of this section within the menu.
@@ -43,7 +44,6 @@ class MenuSection:
 
     def get_elements(self) -> List[Element]:
         """Get the list of elements that compose this menu section's border.
-        
         Returns:
             List[Element]: List of Element objects making up the section box.
         """
@@ -54,9 +54,10 @@ class MenuSection:
         self.selected = not self.selected
 
     def fill_elements(self) -> None:
-        """Generate and populate the elements list to create a bordered box layout.
-        
-        Creates border elements (corners, edges) using the appropriate tile graphics
+        """Generate and populate the elements
+        list to create a bordered box layout.
+        Creates border elements (corners, edges)
+        using the appropriate tile graphics
         and positions them based on the section's offset and dimensions.
         """
         for column in range(self.height):  # 3 in hight
@@ -114,19 +115,21 @@ class MenuSection:
 class Menu:
     """
     A class representing a menu with multiple selectable sections.
-    This class manages a vertical menu with sections that can be navigated using
-    move_up() and move_down() methods. It tracks which section is currently selected
+    This class manages a vertical menu with sections
+    that can be navigated using
+    move_up() and move_down() methods.
+    It tracks which section is currently selected
     and handles the visual positioning of menu sections.
     Attributes:
         vertical_shift (int): The vertical offset for menu positioning.
         horizontal_shift (int): The horizontal offset for menu positioning.
         selected_index (int): The index of the currently selected menu section.
-        sections (List[MenuSection]): List of menu sections contained in this menu.
+        sections (List[MenuSection]):
+        List of menu sections contained in this menu.
     """
 
     def __init__(self, vertical_shift: int, horizontal_shift: int) -> None:
         """Initialize a Menu with positioning offsets.
-        
         Args:
             vertical_shift (int): The vertical offset for menu positioning.
             horizontal_shift (int): The horizontal offset for menu positioning.
@@ -138,7 +141,6 @@ class Menu:
 
     def get_sections(self) -> List[MenuSection]:
         """Get all menu sections.
-        
         Returns:
             List[MenuSection]: List of all sections in the menu.
         """
@@ -146,7 +148,6 @@ class Menu:
 
     def get_selected_index(self) -> int:
         """Get the index of the currently selected section.
-        
         Returns:
             int: Index of the selected section.
         """
@@ -154,10 +155,9 @@ class Menu:
 
     def add_section(self, text: str) -> None:
         """Add a new section to the menu.
-        
-        Creates a new MenuSection with the given text and populates its elements.
+        Creates a new MenuSection with the given text
+        and populates its elements.
         Updates the vertical position for the next section to be added.
-        
         Args:
             text (str): The text to display in the new section.
         """
@@ -175,7 +175,6 @@ class Menu:
 
     def move_up(self) -> None:
         """Move the selection upward through the menu sections.
-        
         Wraps around to the last section if already at the first section.
         """
         selected_index: int = self.selected_index
@@ -192,7 +191,6 @@ class Menu:
 
     def move_down(self) -> None:
         """Move the selection downward through the menu sections.
-        
         Wraps around to the first section if already at the last section.
         """
         selected_index = self.selected_index

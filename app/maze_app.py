@@ -1,6 +1,7 @@
-from app.player import Player, PlayerDirection
-from app.renderer import Rendrer
-from app.menu import Menu
+from .player import Player, PlayerDirection
+from .renderer import Rendrer
+from .menu import Menu
+
 from mazegen.maze_generator import MazeGenerator
 from mazegen.maze import Maze, MazeConfig
 
@@ -13,9 +14,10 @@ import curses
 class MazeApp:
     """Main application class for the interactive maze generator and player.
 
-    This class manages the curses terminal interface, menu navigation, maze generation,
-    and player interaction within the maze. It coordinates all components of the
-    maze application including rendering, generation, and user input handling.
+    This class manages the curses terminal interface,
+    menu navigation, maze generation, and player interaction within the maze.
+    It coordinates all components of the maze application including rendering,
+    generation, and user input handling.
     """
 
     def __init__(self) -> None:
@@ -25,7 +27,8 @@ class MazeApp:
         calculates terminal layout, and creates the menu, maze, and renderer.
 
         Raises:
-            SystemExit: If configuration file is missing, invalid, or terminal is too small.
+            SystemExit: If configuration file is missing,
+            invalid, or terminal is too small.
         """
         self.error: Optional[str] = None
         try:
@@ -64,13 +67,24 @@ class MazeApp:
         self.menu_width: int = 22
         self.menu_yshift = 0
         if self.menu_height > self.maze_height:
-            self.menu_yshift = (self.term_height // 2) - (self.menu_height // 2)
+            self.menu_yshift = (
+                (self.term_height // 2) - (self.menu_height // 2)
+                )
         else:
-            self.menu_yshift = (self.maze_height // 2) - (self.menu_height // 2)
-        self.menu_xshift: int = (self.term_width // 2) + 2
+            self.menu_yshift = (
+                (self.term_height // 2) - (self.maze_height // 2)
+                )
 
-        self.maze_yshift: int = (self.term_height // 2) - (self.maze_height // 2)
-        self.maze_xshift: int = (self.term_width // 2) - (self.maze_width) - 2
+        self.menu_xshift: int = (
+            (self.term_width // 2) + 2)
+
+        self.maze_yshift: int = (
+            (self.term_height // 2) - (self.maze_height // 2)
+            )
+
+        self.maze_xshift: int = (
+            (self.term_width // 2) - (self.maze_width) - 2
+            )
 
         try:
             if (
@@ -104,9 +118,12 @@ class MazeApp:
     def run(self) -> None:
         """Start the main application loop.
 
-        Displays the menu and enters the main event loop, handling user input for
-        maze generation, stepping through generation, player mode, path toggling,
-        color changing, and application exit. Gracefully handles terminal errors
+        Displays the menu and enters the main event loop,
+        handling user input for
+        maze generation, stepping through generation,
+        player mode, path toggling,
+        color changing, and application exit.
+        Gracefully handles terminal errors
         and keyboard interrupts.
         """
         try:
@@ -150,7 +167,9 @@ class MazeApp:
 
                             self.generator.gen_grid(self.maze)
                             self.generator.brake_walls(self.maze)
-                            self.generator.handel_corners(self.maze.get_elements())
+                            self.generator.handel_corners(
+                                self.maze.get_elements()
+                                )
                             self.rendrer.render_maze(
                                 self.maze,
                                 self.duration,
@@ -160,6 +179,7 @@ class MazeApp:
 
                         # generate with steps
                         case 1:
+
                             self.running = True
                             self.rendrer.erase_maze(self.maze)
                             self.generator.generate(
@@ -167,6 +187,19 @@ class MazeApp:
                                 self.maze,
                                 self.config.entry,
                                 self.config.exit,
+                            )
+                            output_file = getattr(
+                                self.config, "output_file", "maze.txt"
+                            )
+
+                            self.generator.save_maze(
+                                self.generator.last_grid,
+                                self.config.height,
+                                self.config.width,
+                                self.config.entry,
+                                self.config.exit,
+                                self.generator.last_path,
+                                output_file,
                             )
                             self.generator.gen_grid(self.maze)
                             self.rendrer.render_maze(
@@ -182,7 +215,9 @@ class MazeApp:
                                 self.current_color_id,
                                 self.show_hide,
                             )
-                            self.generator.handel_corners(self.maze.get_elements())
+                            self.generator.handel_corners(
+                                self.maze.get_elements()
+                                )
                             self.rendrer.render_maze(
                                 self.maze,
                                 self.duration,
@@ -215,36 +250,46 @@ class MazeApp:
                                 player_key = self.stdscr.getch()
                                 if player_key == curses.KEY_RESIZE:
                                     raise Exception(
-                                        "Please do not resize the terminal or i will kill you"
+                                        "Please do not resize the terminal"
+                                        "or i will kill you"
                                     )
 
-                                elif player_key == ord("q") or player_key == ord("Q"):
+                                elif (player_key == ord("q")
+                                      or player_key == ord("Q")):
                                     break
 
                                 elif player_key == curses.KEY_UP:
 
                                     player.move(
-                                        PlayerDirection.UP, self.maze.get_cells()
+                                        PlayerDirection.UP,
+                                        self.maze.get_cells()
                                     )
-                                    self.rendrer.render_player(player, last_player_pos)
+                                    self.rendrer.render_player(player,
+                                                               last_player_pos)
 
                                 elif player_key == curses.KEY_DOWN:
                                     player.move(
-                                        PlayerDirection.DOWN, self.maze.get_cells()
+                                        PlayerDirection.DOWN,
+                                        self.maze.get_cells()
                                     )
-                                    self.rendrer.render_player(player, last_player_pos)
+                                    self.rendrer.render_player(player,
+                                                               last_player_pos)
 
                                 elif player_key == curses.KEY_LEFT:
                                     player.move(
-                                        PlayerDirection.LEFT, self.maze.get_cells()
+                                        PlayerDirection.LEFT,
+                                        self.maze.get_cells()
                                     )
-                                    self.rendrer.render_player(player, last_player_pos)
+                                    self.rendrer.render_player(player,
+                                                               last_player_pos)
 
                                 elif player_key == curses.KEY_RIGHT:
                                     player.move(
-                                        PlayerDirection.RIGHT, self.maze.get_cells()
+                                        PlayerDirection.RIGHT,
+                                        self.maze.get_cells()
                                     )
-                                    self.rendrer.render_player(player, last_player_pos)
+                                    self.rendrer.render_player(player,
+                                                               last_player_pos)
 
                                 if (player.y, player.x) == self.config.exit:
                                     break
@@ -274,7 +319,9 @@ class MazeApp:
                         case 4:
                             old_color = self.current_color_id
                             while self.current_color_id == old_color:
-                                self.current_color_id = choice([1, 5, 10, 15, 20])
+                                self.current_color_id = (
+                                    choice([1, 5, 10, 15, 20])
+                                    )
                             self.rendrer.render_maze(
                                 self.maze,
                                 self.duration,
