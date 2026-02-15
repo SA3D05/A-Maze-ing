@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 
-from mazegen import MazeApp
+from app import MazeApp
 
 if __name__ == "__main__":
 

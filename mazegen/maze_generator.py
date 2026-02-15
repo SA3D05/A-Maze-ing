@@ -7,17 +7,31 @@ from .tile import Tile
 
 from heapq import heappop, heappush
 from random import choice, randint
-from typing import List, Tuple
+from typing import List, Optional, Set, Tuple
 from random import seed as sync_seed
-from math import sqrt
 
 
 class MazeGenerator:
+    """Generates mazes using recursive backtracking algorithm.
+
+    This class handles maze generation, wall carving, path finding (Dijkstra's algorithm),
+    and rendering logic for converting maze structure to visual elements.
+
+    Attributes:
+        config (MazeConfig): Configuration parameters for the maze.
+        last_path (List[Tuple[int, int]]): The solution path from last generation.
+        last_grid (List[List[Cell]]): The cell grid from last generation.
+    """
 
     def __init__(self, config: MazeConfig):
+        """Initialize the MazeGenerator with a configuration.
+
+        Args:
+            config (MazeConfig): Configuration object containing maze parameters.
+        """
         self.config: MazeConfig = config
-        self.last_path: List = []
-        self.last_grid: List = []
+        self.last_path: List[Tuple[int, int]] = list()
+        self.last_grid: List[List[Cell]] = list()
 
     def save_maze(
         self,
@@ -29,9 +43,20 @@ class MazeGenerator:
         path_coords: List[Tuple[int, int]],
         filename: str = "maze.txt",
     ) -> None:
-        """
-        Saves maze structure (Hex), Entry/Exit, and Path Solution to a file.
-        Weights: North=1, East=2, South=4, West=8.
+        """Save maze structure, entry/exit points, and solution path to a file.
+
+        Encodes the maze structure as hexadecimal where each cell is represented
+        by a 4-bit value (walls on up=1, right=2, down=4, left=8).
+        Saves entry/exit coordinates and solution path as a hex mask.
+
+        Args:
+            grid (List[List[Cell]]): The maze grid to save.
+            width (int): Width of the maze in cells.
+            height (int): Height of the maze in cells.
+            entry (Tuple[int, int]): Entry point as (y, x).
+            exit_pt (Tuple[int, int]): Exit point as (y, x).
+            path_coords (List[Tuple[int, int]]): List of cells in the solution path.
+            filename (str): Output file path. Defaults to "maze.txt".
         """
         try:
             with open(filename, "w") as f:
@@ -70,6 +95,19 @@ class MazeGenerator:
     def __encode_path_mask(
         self, width: int, height: int, path_coords: List[Tuple[int, int]]
     ) -> str:
+        """Encode the solution path as a hexadecimal mask.
+
+        Creates a binary string where each bit represents whether a cell is part
+        of the solution path, then converts to hexadecimal.
+
+        Args:
+            width (int): Width of the maze in cells.
+            height (int): Height of the maze in cells.
+            path_coords (List[Tuple[int, int]]): List of cells in the solution path.
+
+        Returns:
+            str: Hexadecimal representation of the path mask.
+        """
         bit_string = ""
         path_set = set(path_coords)
         for y in range(height):
@@ -77,9 +115,21 @@ class MazeGenerator:
                 bit_string += "1" if (x, y) in path_set else "0"
         return f"{int(bit_string, 2):X}" if bit_string else "0"
 
-    def __get_neighbors(self, x: int, y: int, visited: set):
+    def __get_neighbors(
+        self, x: int, y: int, visited: Set[Tuple[int, int]]
+    ) -> List[Tuple[int, int, str, str]]:
+        """Get unvisited neighboring cells in four cardinal directions.
 
-        neighbors = []
+        Args:
+            x (int): X-coordinate of current cell.
+            y (int): Y-coordinate of current cell.
+            visited (Set[Tuple[int, int]]): Set of already visited cell coordinates.
+
+        Returns:
+            List[Tuple[int, int, str, str]]: List of (x, y, current_wall_attr, neighbor_wall_attr) tuples
+                for each valid unvisited neighbor, where wall attributes are 'up', 'down', 'left', 'right'.
+        """
+        neighbors: List[Tuple[int, int, str, str]] = []
         directions = [
             (0, -1, "up", "down"),
             (0, 1, "down", "up"),
@@ -99,8 +149,20 @@ class MazeGenerator:
         return neighbors
 
     def generate(self, maze: Maze, make_perfect: bool) -> None:
-        """Recursive Backtracking to create a perfect maze.
-        take maze object and update its cells with new generated ones.
+        """Generate a maze using recursive backtracking algorithm.
+
+        Creates a maze by carving passages through a grid of cells. The algorithm
+        randomly selects unvisited neighbors and removes walls between them.
+        Can generate perfect mazes (no loops) or imperfect ones (with loops).
+        The center area displays a large "42" pattern that cannot be carved.
+
+        Args:
+            maze (Maze): The maze object to populate with generated cells.
+            make_perfect (bool): If True, generates a perfect maze (no loops).
+                If False, randomly removes walls to create loops.
+
+        Raises:
+            ValueError: If entry or exit is within the protected "42" pattern area.
         """
         if self.config.seed_val == "Random/System Time":
             sync_seed(None)
@@ -122,8 +184,8 @@ class MazeGenerator:
                 new_cell = Cell(y, x, True, True, True, True, current_cell_state)
                 row.append(new_cell)
             grid.append(row)
-        stack = []
-        visited = set()
+        stack: List[Cell] = []
+        visited: Set[Tuple[int, int]] = set()
 
         # Coordinates (x, y) that should stay as solid blocks to form "42"
 
@@ -183,7 +245,9 @@ class MazeGenerator:
         stack.append(grid[0][0])
         while stack:
             current = stack[-1]
-            neighbors = self.__get_neighbors(current.x, current.y, visited)
+            neighbors: List[Tuple[int, int, str, str]] = self.__get_neighbors(
+                current.x, current.y, visited
+            )
 
             if neighbors:
                 nx, ny, curr_wall, neigh_wall = choice(neighbors)
@@ -209,28 +273,40 @@ class MazeGenerator:
                 cells_list.append(cell)
 
         path = self.__dijkstra(grid, self.config.entry, self.config.exit)
-        self.last_path = path  # type: ignore # store path so caller can pass it to save_maze()
+        self.last_path = path if path else [()]  # type: ignore # store path so caller can pass it to save_maze()
         self.last_grid = grid
 
         if path is not None:
             for cell in cells_list:
-                if (cell.x, cell.y) in path and cell.state not in [
+                if (cell.y, cell.x) in path and cell.state not in [
                     CellState.ENTRY,
                     CellState.EXIT,
                 ]:
                     cell.state = CellState.PATH
         maze.update_cells(cells_list)
 
-    def __remove_random_walls(self, grid, width, height, factor=0.1) -> None:
-        """
-        Takes a finished maze and breaks extra walls to create loops.
+    def __remove_random_walls(
+        self, grid: List[List[Cell]], width: int, height: int, factor: float = 0.1
+    ) -> None:
+        """Randomly remove walls to create loops in the maze.
+
+        Breaks down walls in the maze to transform it from a perfect maze
+        (spanning tree with no loops) to one with multiple paths. Protected
+        areas (the "42" pattern) are not affected.
+
+        Args:
+            grid (List[List[Cell]]): The maze grid to modify.
+            width (int): Width of the maze in cells.
+            height (int): Height of the maze in cells.
+            factor (float): Fraction of walls to remove relative to total cells.
+                Defaults to 0.1 (10% of cells worth of walls).
         """
 
         pos_x = (width - 7) // 2
         pos_y = (height - 5) // 2
         end_x, end_y = pos_x + 7, pos_y + 5
 
-        def is_protected(x, y):
+        def is_protected(x: int, y: int) -> bool:
             return pos_x <= x < end_x and pos_y <= y < end_y
 
         extra_openings = int((width * height) * factor)
@@ -252,61 +328,82 @@ class MazeGenerator:
                     current_cell.down = False
                     neighbor.up = False
 
-    def __dijkstra(self, grid, start, end):
+    def __dijkstra(
+        self, grid: List[List[Cell]], start: Tuple[int, int], end: Tuple[int, int]
+    ) -> Optional[List[Tuple[int, int]]]:
+        """Find the shortest path between two points using Dijkstra's algorithm.
+
+        Finds the shortest path through the maze from start to end by exploring
+        cells in order of distance, respecting walls and barriers.
+
+        Args:
+            grid (List[List[Cell]]): The maze grid containing cells and walls.
+            start (Tuple[int, int]): Starting position as (y, x).
+            end (Tuple[int, int]): Ending position as (y, x).
+
+        Returns:
+            Optional[List[Tuple[int, int]]]: List of (y, x) coordinates forming the path,
+                or a fallback single-coordinate list if no path exists.
         """
-        grid: 2D list of Cell objects
-        start/end: tuples (x, y)
-        """
-        if not isinstance(grid[0], list):
-            # We assume square or use a known width
-            width = int(sqrt(len(grid)))
-            grid = [grid[i : i + width] for i in range(0, len(grid), width)]
+
+        # if the grid type is correct that scope logic not neessesery
+        # if not isinstance(grid[0], list):
+        #     width = int(sqrt(len(grid)))
+        #     grid = [grid[i : i + width] for i in range(0, len(grid), width)]
 
         rows, cols = len(grid), len(grid[0])
-        # pq: (distance, (x, y), path_list)
+
+        # pq: (distance, (y, x), path_list)
         pq = [(0, start, [start])]
-        visited = set()
+        visited: Set[Tuple[int, int]] = set()
 
         while pq:
-            (dist, (cx, cy), path) = heappop(pq)
+            # Unpack as (cy, cx) to match the new (y, x) format
+            (dist, (cy, cx), path) = heappop(pq)
 
-            if (cx, cy) == end:
+            if (cy, cx) == end:
                 return path
 
-            if (cx, cy) in visited:
+            if (cy, cx) in visited:
                 continue
-            visited.add((cx, cy))
+            visited.add((cy, cx))
 
+            # Grid access remains [y][x]
             current_cell = grid[cy][cx]
 
-            # Check all 4 directions based on wall status
-            # Note: We move to (nx, ny) only if the wall between is False
+            # directions are now (ny, nx, is_open)
             directions = [
-                (cx, cy - 1, not current_cell.up),
-                (cx, cy + 1, not current_cell.down),
-                (cx - 1, cy, not current_cell.left),
-                (cx + 1, cy, not current_cell.right),
+                (cy - 1, cx, not current_cell.up),  # North
+                (cy + 1, cx, not current_cell.down),  # South
+                (cy, cx - 1, not current_cell.left),  # West
+                (cy, cx + 1, not current_cell.right),  # East
             ]
 
-            for nx, ny, is_open in directions:
-                if is_open and 0 <= nx < cols and 0 <= ny < rows:
-                    if (nx, ny) not in visited:
-                        heappush(pq, (dist + 1, (nx, ny), path + [(nx, ny)]))
-
-        return None  # No path found
+            for ny, nx, is_open in directions:
+                # Note: ny is checked against rows, nx against cols
+                if is_open and 0 <= ny < rows and 0 <= nx < cols:
+                    if (ny, nx) not in visited:
+                        heappush(pq, (dist + 1, (ny, nx), path + [(ny, nx)]))
+        return [(0, 0)]
         # -------------------------------------------------------------
 
     def gen_grid(self, maze: Maze) -> None:
-        """Generate the initial grid structure of the maze.
-        Note: Make me less ugly !!
+        """Generate visual elements for the maze based on cell structure.
+
+        Creates visual representation by mapping cell data to appropriate
+        tile characters. Handles corners, edges, and internal junctions.
+        Populates the maze's element list for rendering.
+
+        Args:
+            maze (Maze): The maze object to populate with visual elements.
         """
-        h_max = self.config.height * 2
-        w_max = self.config.width * 2
+        h_max: int = self.config.height * 2
+        w_max: int = self.config.width * 2
 
         for col in range(h_max + 1):
             for row in range(w_max + 1):
                 # 1. Determine the character
-                shape = None
+                shape: Optional[str] = None
 
                 # Perfect Corners
                 if (col, row) == (0, 0):
@@ -380,40 +477,76 @@ class MazeGenerator:
                                 )
 
     def get_horizontal_cell_pos(self, pos: int, x_shift: int) -> int:
+        """Convert a cell column position to horizontal rendering position.
+
+        Args:
+            pos (int): The cell column position.
+            x_shift (int): Horizontal rendering offset.
+
+        Returns:
+            int: The horizontal screen position.
+        """
         result: int = pos * 2 + 1 + x_shift
         return result
 
     def get_vertical_cell_pos(self, pos: int, y_shift: int) -> int:
+        """Convert a cell row position to vertical rendering position.
+
+        Args:
+            pos (int): The cell row position.
+            y_shift (int): Vertical rendering offset.
+
+        Returns:
+            int: The vertical screen position.
+        """
         result: int = pos * 2 + 1 + y_shift
         return result
 
     def get_near_element(
         self, element: Element, elements: List[Element], directions: int
-    ):
+    ) -> Optional[str]:
+        """Get the character of an adjacent element in a specified direction.
 
-        target_x = -1
-        target_y = -1
+        Args:
+            element (Element): The reference element.
+            elements (List[Element]): List of all elements to search.
+            directions (int): Direction to search (0=up, 1=right, 2=down, 3=left).
+
+        Returns:
+            Optional[str]: The shape of the adjacent element, or None if not found.
+        """
+
+        target_x: int = -1
+        target_y: int = -1
 
         if directions == 0:
-            target_x: int = element.x
-            target_y: int = element.y - 1
+            target_x = element.x
+            target_y = element.y - 1
 
         elif directions == 1:
-            target_x: int = element.x + 1
-            target_y: int = element.y
+            target_x = element.x + 1
+            target_y = element.y
         elif directions == 2:
-            target_x: int = element.x
-            target_y: int = element.y + 1
+            target_x = element.x
+            target_y = element.y + 1
         elif directions == 3:
-            target_x: int = element.x - 1
-            target_y: int = element.y
+            target_x = element.x - 1
+            target_y = element.y
 
         for el in elements:
             if el.x == target_x and el.y == target_y:
                 return el.shape
         return None
 
-    def brake_walls(self, maze: Maze):
+    def brake_walls(self, maze: Maze) -> None:
+        """Clear visual elements for open walls based on cell structure.
+
+        Updates element shapes to spaces where cells have no walls,
+        effectively "breaking" the wall characters in those positions.
+
+        Args:
+            maze (Maze): The maze to process.
+        """
         for cell in maze.get_cells():
             for element in maze.get_elements():
                 # up
@@ -432,16 +565,24 @@ class MazeGenerator:
                         element.shape = " "
                 # up and right  for the next cell handel the previes down and left so we dont actily need them
 
-    def handel_center(self, element: Element, elements: List[Element]):
-        """Handle the rendering of center junctions based on surrounding elements."""
-        up = 1 if self.get_near_element(element, elements, 0) != " " else 0
-        down = 2 if self.get_near_element(element, elements, 2) != " " else 0
-        left = 4 if self.get_near_element(element, elements, 3) != " " else 0
-        right = 8 if self.get_near_element(element, elements, 1) != " " else 0
+    def handel_center(self, element: Element, elements: List[Element]) -> None:
+        """Update a center junction element based on surrounding cell walls.
 
-        score = up + down + left + right
+        Examines the four adjacent directions to determine which passages are open,
+        then selects the appropriate T-junction or corner tile character.
 
-        bit_map = {
+        Args:
+            element (Element): The center junction element to update.
+            elements (List[Element]): List of all elements for context lookup.
+        """
+        up: int = 1 if self.get_near_element(element, elements, 0) != " " else 0
+        down: int = 2 if self.get_near_element(element, elements, 2) != " " else 0
+        left: int = 4 if self.get_near_element(element, elements, 3) != " " else 0
+        right: int = 8 if self.get_near_element(element, elements, 1) != " " else 0
+
+        score: int = up + down + left + right
+
+        bit_map: dict[int, str] = {
             1: Tile.SHORT_UP.value,
             2: Tile.SHORT_DOWN.value,
             3: Tile.VERTICAL.value,
@@ -461,7 +602,15 @@ class MazeGenerator:
 
         element.shape = bit_map.get(score, Tile.SPACE.value)
 
-    def handel_corners(self, elements: List[Element]):
+    def handel_corners(self, elements: List[Element]) -> None:
+        """Update all junction and corner elements based on surrounding structure.
+
+        Processes all elements that represent junctions or corners, updating them
+        to the correct tile character based on which adjacent passages are open.
+
+        Args:
+            elements (List[Element]): List of all elements to process.
+        """
         for element in elements:
             if element.shape == Tile.CENTER.value:
                 self.handel_center(element, elements)

@@ -21,7 +21,7 @@ install:
 
 
 run:
-	PYTHONPATH=. $(PYTHON) $(ENTRY_POINT) $(CONFIG) 2>log.log
+	@$(PYTHON) $(ENTRY_POINT) $(CONFIG)
 
 
 clean:

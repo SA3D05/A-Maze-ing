@@ -1,18 +1,33 @@
 from .player import Player, PlayerDirection
-from .maze_generator import MazeGenerator
-from .maze import Maze, MazeConfig
 from .renderer import Rendrer
 from .menu import Menu
+from mazegen.maze_generator import MazeGenerator
+from mazegen.maze import Maze, MazeConfig
 
 from random import choice
-from typing import List
+from typing import List, Optional
 from sys import argv
 import curses
 
 
 class MazeApp:
+    """Main application class for the interactive maze generator and player.
+    
+    This class manages the curses terminal interface, menu navigation, maze generation,
+    and player interaction within the maze. It coordinates all components of the
+    maze application including rendering, generation, and user input handling.
+    """
+    
     def __init__(self) -> None:
-        self.error = None
+        """Initialize the MazeApp and set up the curses terminal interface.
+        
+        Parses configuration from command-line arguments, initializes curses,
+        calculates terminal layout, and creates the menu, maze, and renderer.
+        
+        Raises:
+            SystemExit: If configuration file is missing, invalid, or terminal is too small.
+        """
+        self.error: Optional[str] = None
         try:
             if len(argv) < 2:
                 raise Exception("Missing config file")
@@ -32,7 +47,7 @@ class MazeApp:
         self.sections: List[str] = [
             "Generate",
             "With steps",
-            "Play",
+            "Player mode",
             "Show/Hide",
             "Change colours",
             "Exit",
@@ -42,43 +57,56 @@ class MazeApp:
 
         self.term_height, self.term_width = self.stdscr.getmaxyx()
 
-        self.maze_height = self.config.height * 2 + 1
-        self.maze_width = self.config.width * 2 + 1
+        self.maze_height: int = self.config.height * 2 + 1
+        self.maze_width: int = self.config.width * 2 + 1
 
-        self.menu_yshift = int((self.term_height / 2) - (self.maze_height / 2))
-        self.menu_xshift = int((self.term_width / 1.5))
+        self.menu_height: int = 3 * len(self.sections)
+        self.menu_width: int = 22
+        self.menu_yshift = 0
+        if self.menu_height > self.maze_height:
+            self.menu_yshift = (self.term_height // 2) - (self.menu_height // 2)
+        else:
+            self.menu_yshift = (self.maze_height // 2) - (self.menu_height // 2)
+        self.menu_xshift: int = (self.term_width // 2) + 2
 
-        self.maze_yshift = int((self.term_height / 2) - (self.maze_height / 2))
-        self.maze_xshift = int((self.term_width / 2) - (self.maze_width))
+        self.maze_yshift: int = (self.term_height // 2) - (self.maze_height // 2)
+        self.maze_xshift: int = (self.term_width // 2) - (self.maze_width) - 2
 
         try:
             if (
-                self.maze_width + 2 > self.term_width / 2
-            ):  # if terminal pass maze + sections
-                raise Exception("size not enugh to draw the maze!")
+                self.menu_height + 2 > self.term_height
+                or self.maze_height + 2 > self.term_height
+            ):
+                raise Exception()
+            if self.menu_width + 10 + self.maze_width > self.term_width:
+                raise Exception()
+            if self.maze_xshift <= 2 or self.maze_yshift <= 2:
+                raise Exception()
 
-            if 3 * len(self.sections) > self.term_height:  # if terminal pass sections
-                raise Exception("[sections height] size not enugh to draw the maze!")
-
-            if self.maze_height > self.term_height:  # if terminal pass maze
-                raise Exception("[maze height] size not enugh to draw the maze!")
-        except Exception as e:
-            self.__dispose_curses()
-            print(e)
+        except Exception:
+            print("terminal size error")
             exit()
 
-        self.menu = Menu(self.menu_yshift, self.menu_xshift)
-        self.rendrer = Rendrer(self.stdscr)
-        self.generator = MazeGenerator(self.config)
-        self.maze = Maze(self.maze_yshift, self.maze_xshift)
+        self.menu: Menu = Menu(self.menu_yshift, self.menu_xshift)
+        self.rendrer: Rendrer = Rendrer(self.stdscr)
+        self.generator: MazeGenerator = MazeGenerator(self.config)
+        self.maze: Maze = Maze(self.maze_yshift, self.maze_xshift)
 
         for section in self.sections:
             self.menu.add_section(section)
         self.show_hide: bool = False
-        self.duration = 0.001
-        self.current_color_id = 1
+        self.duration: float = 0.001
+        self.current_color_id: int = 1
+        self.running: bool = False
 
-    def run(self):
+    def run(self) -> None:
+        """Start the main application loop.
+        
+        Displays the menu and enters the main event loop, handling user input for
+        maze generation, stepping through generation, player mode, path toggling,
+        color changing, and application exit. Gracefully handles terminal errors
+        and keyboard interrupts.
+        """
         try:
             self.rendrer.render_menu(self.menu)
             self.generator.gen_grid(self.maze)
@@ -96,6 +124,7 @@ class MazeApp:
                     match self.menu.get_selected_index():
                         # generate
                         case 0:
+                            self.running = True
                             self.rendrer.erase_maze(self.maze)
                             self.generator.generate(self.maze, self.config.is_perfect)
                             output_file = getattr(
@@ -124,6 +153,7 @@ class MazeApp:
 
                         # generate with steps
                         case 1:
+                            self.running = True
                             self.rendrer.erase_maze(self.maze)
                             self.generator.generate(
                                 self.maze,
@@ -153,7 +183,8 @@ class MazeApp:
 
                         # play
                         case 2:
-
+                            if not self.running:
+                                continue
                             old_show_hide = self.show_hide
                             show_hide = False
                             player = Player(
@@ -220,6 +251,8 @@ class MazeApp:
 
                         # show/hide
                         case 3:
+                            if not self.running:
+                                continue
                             self.show_hide = not self.show_hide
                             self.rendrer.render_maze(
                                 self.maze,
@@ -253,7 +286,7 @@ class MazeApp:
                     self.rendrer.render_menu(self.menu)
                 curses.flushinp()
         except Exception as e:
-            self.error = e
+            self.error = str(e)
         except KeyboardInterrupt:
             self.error = "Quit the program"
         finally:
@@ -261,7 +294,13 @@ class MazeApp:
             if self.error:
                 print(self.error)
 
-    def __setup_curses(self):
+    def __setup_curses(self) -> None:
+        """Initialize the curses terminal environment.
+        
+        Sets up terminal modes, color pairs, and custom colors for the maze
+        visualization. Configures the curses library for interactive input and
+        custom color support.
+        """
         self.stdscr = curses.initscr()  # Start curses
         self.stdscr.keypad(True)  # Enable arrow keys
         curses.noecho()  # Don't print keys pressed to screen
@@ -303,7 +342,12 @@ class MazeApp:
         for i in range(25):
             curses.init_pair(i + 1, 20 + i, -1)
 
-    def __dispose_curses(self):
+    def __dispose_curses(self) -> None:
+        """Clean up and restore the terminal to its normal state.
+        
+        Disables curses mode and returns the terminal to normal operation.
+        Should be called before exiting the application.
+        """
         self.stdscr.keypad(False)
         curses.nocbreak()
         curses.echo()
