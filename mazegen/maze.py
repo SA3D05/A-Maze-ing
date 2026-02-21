@@ -1,3 +1,5 @@
+import sys
+
 from .element import Element
 from .cell import Cell
 
@@ -40,9 +42,9 @@ class MazeConfig:
         self.width: int = 0
         self.entry: Tuple[int, int] = (-1, -1)
         self.exit: Tuple[int, int] = (-1, -1)
-        self.output: str = "output.txt"
+        self.output: str = "maze.txt"
         self.is_perfect: bool = True
-        self.seed_val: str = "Random/System Time"
+        self.seed_val: Optional[str] = None
 
     def parse(self, filename: str) -> None:
         """Parse maze configuration from a text file.
@@ -66,14 +68,34 @@ class MazeConfig:
                     key, value = line.split("=", 1)
                     row_config[key.strip().upper()] = value.strip()
 
+        
+
+
+        if not all(key in row_config for key in ["HEIGHT", "WIDTH", "ENTRY","EXIT","PERFECT","OUTPUT_FILE"]):
+            raise Exception()
+        
+
+        for val in row_config.values():
+            if val == "":
+                raise Exception()
+        
+
         self.width = int(row_config.get("WIDTH", -1))
         self.height = int(row_config.get("HEIGHT", -1))
 
+
+
+    
         if self.width < 9 or self.height < 7:
             raise Exception()
+        if self.width > 50 or self.height > 50:
+            raise Exception()
 
-        perf_str = row_config.get("PERFECT", "TRUE").upper()
-        self.is_perfect = perf_str == "TRUE"
+        perf_val = row_config.get("PERFECT","").upper()
+        if perf_val not in ["TRUE", "FALSE"]:
+            raise Exception()
+
+        self.is_perfect = perf_val == "TRUE"
 
         # --- SEED LOGIC ---
         raw_seed = row_config.get("SEED")
@@ -82,14 +104,15 @@ class MazeConfig:
             self.seed_val = raw_seed
             # We can set the seed here globally or pass it to generator
             set_random_seed(raw_seed)
-        else:
-            # If seed is missing or commented out, use system time (None)
-            self.seed_val = "Random/System Time"
-            set_random_seed(None)
+
+
+        print (self.__dict__, file=sys.stderr)
+        
+        
+        self.output = row_config.get("OUTPUT_FILE", "maze.txt")
 
         self.entry = self._get_safe_coords(row_config, "ENTRY", -1, -1)
         self.exit = self._get_safe_coords(row_config, "EXIT", -1, -1)
-
         if self.entry == self.exit or -1 in self.entry or -1 in self.exit:
             raise Exception()
 

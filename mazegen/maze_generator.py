@@ -1,3 +1,31 @@
+"""maze_generator.py
+
+This module contains the MazeGenerator class responsible for generating
+mazes using a recursive backtracking algorithm. It also includes methods
+for saving the maze structure to a file, finding paths using Dijkstra's
+algorithm, and rendering the maze as visual elements. The generator
+supports both perfect mazes (no loops) and imperfect mazes (with loops),
+and includes a protected "42" pattern in the center that cannot be carved.
+
+---------------------
+Simple Usage Example:
+---------------------
+
+from maze_generator import MazeGenerator
+maze_gen = MazeGenerator(height=15, width=20)
+maze = Maze()
+maze_gen.generate(
+    make_perfect=True,
+    maze=maze,
+    entry_pos=(0, 0),
+    exit_pos=(14, 19)
+    )
+maze_gen.gen_grid(maze)
+
+
+"""
+
+
 from .cell import Cell, CellState
 from .element import Element
 from .maze import Maze
@@ -5,7 +33,7 @@ from .tile import Tile
 
 
 from heapq import heappop, heappush
-from random import choice, randint
+from random import choice, randint, seed
 from typing import List, Optional, Set, Tuple
 
 
@@ -166,6 +194,7 @@ class MazeGenerator:
         maze: Optional[Maze],
         entry_pos: Optional[Tuple[int, int]],
         exit_pos: Optional[Tuple[int, int]],
+        seed_val: Optional[str] = None,
     ) -> List[Cell]:
         """Generate a maze using recursive backtracking algorithm.
 
@@ -184,6 +213,9 @@ class MazeGenerator:
             ValueError: If entry or exit is within
             the protected "42" pattern area.
         """
+
+        seed(seed_val)
+
 
         grid: List[List[Cell]] = []
         for y in range(self.height):

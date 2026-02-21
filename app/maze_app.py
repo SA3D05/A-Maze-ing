@@ -66,6 +66,7 @@ class MazeApp:
         self.menu_height: int = 3 * len(self.sections)
         self.menu_width: int = 22
         self.menu_yshift = 0
+
         if self.menu_height > self.maze_height:
             self.menu_yshift = (
                 (self.term_height // 2) - (self.menu_height // 2)
@@ -98,7 +99,8 @@ class MazeApp:
                 raise Exception()
 
         except Exception:
-            print("terminal size error")
+            self.__dispose_curses()
+            print("Terminal size error")
             exit()
 
         self.menu: Menu = Menu(self.menu_yshift, self.menu_xshift)
@@ -111,7 +113,7 @@ class MazeApp:
         for section in self.sections:
             self.menu.add_section(section)
         self.show_hide: bool = False
-        self.duration: float = 0.001
+        self.duration: float = 0.0001
         self.current_color_id: int = 1
         self.running: bool = False
 
@@ -136,23 +138,19 @@ class MazeApp:
             while True:
                 key = self.stdscr.getch()
                 if key == curses.KEY_RESIZE:
-                    raise Exception(
-                        "Please do not resize the terminal or i will kill you"
-                    )
+                    raise Exception("Terminal size error")
                 elif key == ord("\n"):
                     match self.menu.get_selected_index():
                         # generate
                         case 0:
                             self.running = True
-                            self.rendrer.erase_maze(self.maze)
+                            self.rendrer.erase_maze(self.maze,self.duration)
                             self.generator.generate(
                                 self.config.is_perfect,
                                 self.maze,
                                 self.config.entry,
                                 self.config.exit,
-                            )
-                            output_file = getattr(
-                                self.config, "output_file", "maze.txt"
+                                self.config.seed_val,
                             )
 
                             self.generator.save_maze(
@@ -162,7 +160,7 @@ class MazeApp:
                                 self.config.entry,
                                 self.config.exit,
                                 self.generator.last_path,
-                                output_file,
+                                self.config.output,
                             )
 
                             self.generator.gen_grid(self.maze)
@@ -176,12 +174,10 @@ class MazeApp:
                                 self.current_color_id,
                                 self.show_hide,
                             )
-
                         # generate with steps
                         case 1:
-
                             self.running = True
-                            self.rendrer.erase_maze(self.maze)
+                            self.rendrer.erase_maze(self.maze,self.duration)
                             self.generator.generate(
                                 self.config.is_perfect,
                                 self.maze,
@@ -224,7 +220,6 @@ class MazeApp:
                                 self.current_color_id,
                                 self.show_hide,
                             )
-
                         # play
                         case 2:
                             if not self.running:

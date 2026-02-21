@@ -79,7 +79,7 @@ class Rendrer:
             self.stdscr.refresh()
             sleep(duration)
 
-    def erase_maze(self, maze: Maze) -> None:
+    def erase_maze(self, maze: Maze, duration: float ) -> None:
         """Clear the maze from the terminal by rendering spaces over it.
 
         Args:
@@ -91,7 +91,7 @@ class Rendrer:
                 element.x,
                 " ",
             )
-            sleep(0.001)
+            sleep(duration)
             self.stdscr.refresh()
 
     def render_player(
