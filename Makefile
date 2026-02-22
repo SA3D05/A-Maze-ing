@@ -1,4 +1,5 @@
 PYTHON = python3
+DEBUGGER= pdb
 PIP = pip3
 ENTRY_POINT = a_maze_ing.py
 CONFIG = config.txt
@@ -19,6 +20,9 @@ install:
 	$(PIP) install flake8 mypy curses-menu # adding common dependencies
 	@echo "Installation complete."
 
+debug:
+	@$(PYTHON) -m $(DEBUGGER) $(ENTRY_POINT) $(CONFIG)
+
 
 run:
 	@$(PYTHON) $(ENTRY_POINT) $(CONFIG)
@@ -34,8 +38,8 @@ clean:
 
 
 lint:
-	flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-	mypy . --ignore-missing-imports
+	flake8 .
+	mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 
 build:
 	$(PYTHON) -m pip install --upgrade build

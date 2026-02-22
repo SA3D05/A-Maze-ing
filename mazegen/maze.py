@@ -1,5 +1,3 @@
-import sys
-
 from .element import Element
 from .cell import Cell
 
@@ -57,64 +55,85 @@ class MazeConfig:
             Exception: If maze dimensions are invalid or entry/exit
             are identical or out of bounds.
         """
-        row_config: Dict[str, str] = {}
-        with open(filename, "r") as fd:
-            for line in fd:
+        raw_config: Dict[str, str] = {}
+        with open(filename, "r") as f:
+            for line in f:
                 line = line.strip()
-                # Skip empty lines or comments
-                if not line or line.startswith("#"):
+                if line.startswith("#"):
                     continue
-                if "=" in line:
-                    key, value = line.split("=", 1)
-                    row_config[key.strip().upper()] = value.strip()
+                if not line:
+                    raise Exception("Empty line")
+                if "=" not in line:
+                    raise Exception(
+                        f"Invalid format in '{line}' "
+                        "expected KEY=VALUE"
+                        )
+                key, value = line.split("=", 1)
+                raw_config[key.strip().upper()] = value.strip()
+        if not all(
+            key in [
+                    "HEIGHT",
+                    "WIDTH",
+                    "ENTRY",
+                    "EXIT",
+                    "PERFECT",
+                    "OUTPUT_FILE",
+                    "SEED",
+                    ] for key in raw_config):
+            raise Exception("Unknown key")
+        if not all(
+            key in raw_config for key in [
+                "HEIGHT",
+                "WIDTH",
+                "ENTRY",
+                "EXIT",
+                "PERFECT",
+                "OUTPUT_FILE",
+                ]):
+            raise Exception("Missing mendatory key")
 
-        
+        for k, v in raw_config.items():
+            if v == "":
+                raise Exception(f"Empty value for key '{k}'")
 
+        self.width = int(raw_config.get("WIDTH", -1))
+        self.height = int(raw_config.get("HEIGHT", -1))
 
-        if not all(key in row_config for key in ["HEIGHT", "WIDTH", "ENTRY","EXIT","PERFECT","OUTPUT_FILE"]):
-            raise Exception()
-        
-
-        for val in row_config.values():
-            if val == "":
-                raise Exception()
-        
-
-        self.width = int(row_config.get("WIDTH", -1))
-        self.height = int(row_config.get("HEIGHT", -1))
-
-
-
-    
         if self.width < 9 or self.height < 7:
-            raise Exception()
+            raise Exception("Min maze size is 9, 7")
         if self.width > 50 or self.height > 50:
-            raise Exception()
+            raise Exception("Max maze size is 50, 50")
 
-        perf_val = row_config.get("PERFECT","").upper()
+        perf_val = raw_config.get("PERFECT", "").upper()
         if perf_val not in ["TRUE", "FALSE"]:
-            raise Exception()
+            raise Exception("'PERFECT' value must be True or False")
 
         self.is_perfect = perf_val == "TRUE"
 
-        # --- SEED LOGIC ---
-        raw_seed = row_config.get("SEED")
+        raw_seed = raw_config.get("SEED")
         if raw_seed:
-            # If a seed exists in config, use it
             self.seed_val = raw_seed
-            # We can set the seed here globally or pass it to generator
             set_random_seed(raw_seed)
+        self.output = raw_config.get("OUTPUT_FILE", "maze.txt")
+        if self.output == '/':
+            raise Exception("Output file can't named '/'")
 
+        self.entry = self._get_safe_coords(raw_config, "ENTRY", -1, -1)
+        self.exit = self._get_safe_coords(raw_config, "EXIT", -1, -1)
 
-        print (self.__dict__, file=sys.stderr)
-        
-        
-        self.output = row_config.get("OUTPUT_FILE", "maze.txt")
+        if -1 in self.entry:
+            raise ValueError(
+                "Invalid 'ENTRY' coordinates"
+            )
 
-        self.entry = self._get_safe_coords(row_config, "ENTRY", -1, -1)
-        self.exit = self._get_safe_coords(row_config, "EXIT", -1, -1)
-        if self.entry == self.exit or -1 in self.entry or -1 in self.exit:
-            raise Exception()
+        if -1 in self.exit:
+            raise ValueError(
+                "Invalid 'EXIT' coordinates"
+            )
+        if self.entry == self.exit:
+            raise ValueError(
+                "'ENTRY' and 'EXIT' cannot be the same coordinates"
+            )
 
     def _get_safe_coords(
         self, config_dict: Dict[str, str], key: str, def_x: int, def_y: int

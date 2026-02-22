@@ -1,4 +1,5 @@
-"""maze_generator.py
+"""
+maze_generator.py
 
 This module contains the MazeGenerator class responsible for generating
 mazes using a recursive backtracking algorithm. It also includes methods
@@ -11,17 +12,19 @@ and includes a protected "42" pattern in the center that cannot be carved.
 Simple Usage Example:
 ---------------------
 
-from maze_generator import MazeGenerator
-maze_gen = MazeGenerator(height=15, width=20)
-maze = Maze()
-maze_gen.generate(
+import mazegen
+maze_gen = mazegen.MazeGenerator(height=15, width=20)
+
+cells = maze_gen.generate(
     make_perfect=True,
-    maze=maze,
     entry_pos=(0, 0),
     exit_pos=(14, 19)
     )
-maze_gen.gen_grid(maze)
 
+
+for cell in cells:
+    if cell.state == mazegen.CellState.path:
+        print(f"({cell.y}, {cell.x})", end=", ")
 
 """
 
@@ -92,40 +95,30 @@ class MazeGenerator:
             List of cells in the solution path.
             filename (str): Output file path. Defaults to "maze.txt".
         """
-        try:
-            with open(filename, "w") as f:
-                # 1. Write the Maze Structure Rows
-                for y in range(height):
-                    row_hex = ""
-                    for x in range(width):
-                        cell = grid[y][x]
-                        val = 0
-                        # Match the attributes in your model.py:
-                        # up, right, down, left
-                        if cell.up:
-                            val += 1
-                        if cell.right:
-                            val += 2
-                        if cell.down:
-                            val += 4
-                        if cell.left:
-                            val += 8
-                        row_hex += f"{val:X}"
-                    f.write(f"{row_hex}\n")
+        with open(filename, "w") as f:
+            for y in range(height):
+                row_hex = ""
+                for x in range(width):
+                    cell = grid[y][x]
+                    val = 0
+                    if cell.up:
+                        val += 1
+                    if cell.right:
+                        val += 2
+                    if cell.down:
+                        val += 4
+                    if cell.left:
+                        val += 8
+                    row_hex += f"{val:X}"
+                f.write(f"{row_hex}\n")
 
-                f.write("\n")  # Blank line separator
+            f.write("\n")
 
-                # 2. Write Entry and Exit
-                f.write(f"{entry[0]},{entry[1]}\n")
-                f.write(f"{exit_pt[0]},{exit_pt[1]}\n\n")
+            f.write(f"{entry[0]},{entry[1]}\n")
+            f.write(f"{exit_pt[0]},{exit_pt[1]}\n\n")
 
-                # 3. Write Path Solution as a single long Hex mask
-                path_hex = self.__encode_path_mask(height, width, path_coords)
-                f.write(f"{path_hex}\n")
-
-        except Exception as e:
-            # Using print here as a fallback if pdeb isn't imported
-            print(f"[File Error]: {e}")
+            path_hex = self.__encode_path_mask(height, width, path_coords)
+            f.write(f"{path_hex}\n")
 
     def __encode_path_mask(
         self, height: int, width: int, path_coords: List[Tuple[int, int]]
@@ -179,7 +172,6 @@ class MazeGenerator:
 
         for dx, dy, curr_attr, neigh_attr in directions:
             nx, ny = x + dx, y + dy
-            # Strictly stay within bounds to keep outer walls solid
             if (
                 0 <= nx < self.width
                 and 0 <= ny < self.height
@@ -191,9 +183,9 @@ class MazeGenerator:
     def generate(
         self,
         make_perfect: bool,
-        maze: Optional[Maze],
-        entry_pos: Optional[Tuple[int, int]],
-        exit_pos: Optional[Tuple[int, int]],
+        maze: Optional[Maze] = None,
+        entry_pos: Optional[Tuple[int, int]] = None,
+        exit_pos: Optional[Tuple[int, int]] = None,
         seed_val: Optional[str] = None,
     ) -> List[Cell]:
         """Generate a maze using recursive backtracking algorithm.
@@ -215,19 +207,17 @@ class MazeGenerator:
         """
 
         seed(seed_val)
-
-
         grid: List[List[Cell]] = []
         for y in range(self.height):
             row: List[Cell] = []
             for x in range(self.width):
-                current_cell_state: CellState = CellState.REGULAR
+                current_cell_state: CellState = CellState.regular
                 if entry_pos and exit_pos:
                     if (y, x) == entry_pos:
-                        current_cell_state = CellState.ENTRY
+                        current_cell_state = CellState.entry
 
                     if (y, x) == exit_pos:
-                        current_cell_state = CellState.EXIT
+                        current_cell_state = CellState._exit
 
                 new_cell = Cell(y, x, True, True, True, True,
                                 current_cell_state)
@@ -235,9 +225,6 @@ class MazeGenerator:
             grid.append(row)
         stack: List[Cell] = []
         visited: Set[Tuple[int, int]] = set()
-
-        # Coordinates (x, y) that should stay as solid blocks to form "42"
-
         coordinating_42_cells = [
             (0, 0),
             (1, 0),
@@ -266,7 +253,6 @@ class MazeGenerator:
             for dy, dx in coordinating_42_cells:
                 target_x, target_y = start_x + dx, start_y + dy
 
-                # make this conition less ugly later
                 if entry_pos and exit_pos:
                     if (target_y == entry_pos[0] and
                         target_x == entry_pos[1]) or (
@@ -281,12 +267,7 @@ class MazeGenerator:
                 for cell_list in grid:
                     for cell in cell_list:
                         if cell.x == target_x and cell.y == target_y:
-                            cell.state = CellState.FT
-                        # we dont know whta the fu** is this for
-                        # if (
-                        #     0 <= target_x < self.config.width
-                        #     and 0 <= target_y < self.config.height
-                        # ):
+                            cell.state = CellState.ft
                         visited.add((target_x, target_y))
 
         start_pos = (0, 0)
@@ -302,7 +283,6 @@ class MazeGenerator:
                 nx, ny, curr_wall, neigh_wall = choice(neighbors)
                 neighbor_cell = grid[ny][nx]
 
-                # Remove shared walls internally to carve paths
                 setattr(current, curr_wall, False)
                 setattr(neighbor_cell, neigh_wall, False)
 
@@ -329,10 +309,10 @@ class MazeGenerator:
         if path is not None:
             for cell in cells_list:
                 if (cell.y, cell.x) in path and cell.state not in [
-                    CellState.ENTRY,
-                    CellState.EXIT,
+                    CellState.entry,
+                    CellState._exit,
                 ]:
-                    cell.state = CellState.PATH
+                    cell.state = CellState.path
         if maze is not None:
             maze.update_cells(cells_list)
         return cells_list
@@ -403,19 +383,12 @@ class MazeGenerator:
                 or a fallback single-coordinate list if no path exists.
         """
 
-        # if the grid type is correct that scope logic not neessesery
-        # if not isinstance(grid[0], list):
-        #     width = int(sqrt(len(grid)))
-        #     grid = [grid[i : i + width] for i in range(0, len(grid), width)]
-
         rows, cols = len(grid), len(grid[0])
 
-        # pq: (distance, (y, x), path_list)
         pq = [(0, start, [start])]
         visited: Set[Tuple[int, int]] = set()
 
         while pq:
-            # Unpack as (cy, cx) to match the new (y, x) format
             (dist, (cy, cx), path) = heappop(pq)
 
             if (cy, cx) == end:
@@ -425,24 +398,20 @@ class MazeGenerator:
                 continue
             visited.add((cy, cx))
 
-            # Grid access remains [y][x]
             current_cell = grid[cy][cx]
 
-            # directions are now (ny, nx, is_open)
             directions = [
-                (cy - 1, cx, not current_cell.up),  # North
-                (cy + 1, cx, not current_cell.down),  # South
-                (cy, cx - 1, not current_cell.left),  # West
-                (cy, cx + 1, not current_cell.right),  # East
+                (cy - 1, cx, not current_cell.up),
+                (cy + 1, cx, not current_cell.down),
+                (cy, cx - 1, not current_cell.left),
+                (cy, cx + 1, not current_cell.right),
             ]
 
             for ny, nx, is_open in directions:
-                # Note: ny is checked against rows, nx against cols
                 if is_open and 0 <= ny < rows and 0 <= nx < cols:
                     if (ny, nx) not in visited:
                         heappush(pq, (dist + 1, (ny, nx), path + [(ny, nx)]))
         return [(0, 0)]
-        # -------------------------------------------------------------
 
     def gen_grid(self, maze: Maze) -> None:
         """Generate visual elements for the maze based on cell structure.
@@ -459,39 +428,33 @@ class MazeGenerator:
 
         for col in range(h_max + 1):
             for row in range(w_max + 1):
-                # 1. Determine the character
                 shape: Optional[str] = None
 
-                # Perfect Corners
                 if (col, row) == (0, 0):
-                    shape = Tile.LEFT_TOP.value
+                    shape = Tile.left_top.value
                 elif (col, row) == (0, w_max):
-                    shape = Tile.RIGHT_TOP.value
+                    shape = Tile.right_top.value
                 elif (col, row) == (h_max, 0):
-                    shape = Tile.LEFT_BOTTOM.value
+                    shape = Tile.left_bottom.value
                 elif (col, row) == (h_max, w_max):
-                    shape = Tile.RIGHT_BOTTOM.value
+                    shape = Tile.right_bottom.value
 
-                # Top/Bottom Edges (T-Junctions)
                 elif col == 0 and row % 2 == 0:
-                    shape = Tile.T_DOWN.value
+                    shape = Tile.t_down.value
                 elif col == h_max and row % 2 == 0:
-                    shape = Tile.T_UP.value
+                    shape = Tile.t_up.value
 
-                # Left/Right Edges (T-Junctions)
                 elif row == 0 and col % 2 == 0:
-                    shape = Tile.T_RIGHT.value
+                    shape = Tile.t_right.value
                 elif row == w_max and col % 2 == 0:
-                    shape = Tile.T_LEFT.value
+                    shape = Tile.t_left.value
 
-                # Internal Grid
                 elif col % 2 == 0:
-                    shape = (Tile.CENTER.value if row % 2 ==
-                             0 else Tile.HORIZONTAL.value)
+                    shape = (Tile.center.value if row % 2 ==
+                             0 else Tile.horizontal.value)
                 elif row % 2 == 0:
-                    shape = Tile.VERTICAL.value
+                    shape = Tile.vertical.value
 
-                # 2. Add to maze (One single call!)
                 if shape:
                     maze.add_element(col + maze.y_shift,
                                      row + maze.x_shift, shape)
@@ -504,35 +467,35 @@ class MazeGenerator:
 
                         if cell_x == row and cell_y == col:
 
-                            if cell.state == CellState.FT:
+                            if cell.state == CellState.ft:
                                 maze.add_element(
                                     col + maze.y_shift,
                                     row + maze.x_shift,
-                                    Tile.BLOCK.value,
+                                    Tile.block.value,
                                 )
-                            elif cell.state == CellState.ENTRY:
+                            elif cell.state == CellState.entry:
                                 maze.add_element(
                                     col + maze.y_shift,
                                     row + maze.x_shift,
-                                    Tile.ENTER.value,
+                                    Tile.entry.value,
                                 )
-                            elif cell.state == CellState.EXIT:
+                            elif cell.state == CellState._exit:
                                 maze.add_element(
                                     col + maze.y_shift,
                                     row + maze.x_shift,
-                                    Tile.EXIT.value,
+                                    Tile._exit.value,
                                 )
-                            elif cell.state == CellState.PATH:
+                            elif cell.state == CellState.path:
                                 maze.add_element(
                                     col + maze.y_shift,
                                     row + maze.x_shift,
-                                    Tile.PATH.value,
+                                    Tile.path.value,
                                 )
-                            elif cell.state == CellState.REGULAR:
+                            elif cell.state == CellState.regular:
                                 maze.add_element(
                                     col + maze.y_shift,
                                     row + maze.x_shift,
-                                    Tile.SPACE.value,
+                                    Tile.space.value,
                                 )
 
     def get_horizontal_cell_pos(self, pos: int, x_shift: int) -> int:
@@ -610,7 +573,6 @@ class MazeGenerator:
         """
         for cell in maze.get_cells():
             for element in maze.get_elements():
-                # up
                 if (
                     element.x == self.get_horizontal_cell_pos(
                         cell.x, maze.x_shift
@@ -620,7 +582,6 @@ class MazeGenerator:
                 ):
                     if not cell.up:
                         element.shape = " "
-                # right
                 if element.x == self.get_horizontal_cell_pos(
                     cell.x, maze.x_shift
                 ) + 1 and element.y == self.get_vertical_cell_pos(
@@ -628,8 +589,6 @@ class MazeGenerator:
                 ):
                     if not cell.right:
                         element.shape = " "
-                # up and right  for the next cell handel the previes
-                # down and left so we dont actily need them
 
     def handel_center(self, element: Element, elements: List[Element]) -> None:
         """Update a center junction element based on surrounding cell walls.
@@ -654,24 +613,24 @@ class MazeGenerator:
         score: int = up + down + left + right
 
         bit_map: dict[int, str] = {
-            1: Tile.SHORT_UP.value,
-            2: Tile.SHORT_DOWN.value,
-            3: Tile.VERTICAL.value,
-            4: Tile.SHORT_LEFT.value,
-            5: Tile.RIGHT_BOTTOM.value,
-            6: Tile.RIGHT_TOP.value,
-            7: Tile.T_LEFT.value,
-            8: Tile.SHORT_RIGHT.value,
-            9: Tile.LEFT_BOTTOM.value,
-            10: Tile.LEFT_TOP.value,
-            11: Tile.T_RIGHT.value,
-            12: Tile.HORIZONTAL.value,
-            13: Tile.T_UP.value,
-            14: Tile.T_DOWN.value,
-            15: Tile.CENTER.value,
+            1: Tile.short_up.value,
+            2: Tile.short_down.value,
+            3: Tile.vertical.value,
+            4: Tile.short_left.value,
+            5: Tile.right_bottom.value,
+            6: Tile.right_top.value,
+            7: Tile.t_left.value,
+            8: Tile.short_right.value,
+            9: Tile.left_bottom.value,
+            10: Tile.left_top.value,
+            11: Tile.t_right.value,
+            12: Tile.horizontal.value,
+            13: Tile.t_up.value,
+            14: Tile.t_down.value,
+            15: Tile.center.value,
         }
 
-        element.shape = bit_map.get(score, Tile.SPACE.value)
+        element.shape = bit_map.get(score, Tile.space.value)
 
     def handel_corners(self, elements: List[Element]) -> None:
         """
@@ -687,20 +646,20 @@ class MazeGenerator:
             elements (List[Element]): List of all elements to process.
         """
         for element in elements:
-            if element.shape == Tile.CENTER.value:
+            if element.shape == Tile.center.value:
                 self.handel_center(element, elements)
-            if element.shape == Tile.T_DOWN.value:
+            if element.shape == Tile.t_down.value:
                 if self.get_near_element(element, elements, 2) == " ":
-                    element.shape = Tile.HORIZONTAL.value
+                    element.shape = Tile.horizontal.value
 
-            elif element.shape == Tile.T_UP.value:
+            elif element.shape == Tile.t_up.value:
                 if self.get_near_element(element, elements, 0) == " ":
-                    element.shape = Tile.HORIZONTAL.value
+                    element.shape = Tile.horizontal.value
 
-            elif element.shape == Tile.T_LEFT.value:
+            elif element.shape == Tile.t_left.value:
                 if self.get_near_element(element, elements, 3) == " ":
-                    element.shape = Tile.VERTICAL.value
+                    element.shape = Tile.vertical.value
 
-            elif element.shape == Tile.T_RIGHT.value:
+            elif element.shape == Tile.t_right.value:
                 if self.get_near_element(element, elements, 1) == " ":
-                    element.shape = Tile.VERTICAL.value
+                    element.shape = Tile.vertical.value

@@ -43,8 +43,18 @@ class MazeApp:
         try:
             self.config = MazeConfig()
             self.config.parse(argv[1])
-        except Exception:
-            print("Config file error")
+        except FileNotFoundError:
+            print(
+                f"Configuration file '{argv[1]}' does not exist."
+                )
+            exit()
+        except PermissionError:
+            print(
+                f"Permission denied when trying to read '{argv[1]}'"
+                )
+            exit()
+        except Exception as e:
+            print(e)
             exit()
 
         self.sections: List[str] = [
@@ -113,7 +123,7 @@ class MazeApp:
         for section in self.sections:
             self.menu.add_section(section)
         self.show_hide: bool = False
-        self.duration: float = 0.0001
+        self.duration: float = 1.0 / (self.maze_height * self.maze_width)
         self.current_color_id: int = 1
         self.running: bool = False
 
@@ -134,17 +144,15 @@ class MazeApp:
             self.rendrer.render_maze(
                 self.maze, self.duration, self.current_color_id, self.show_hide
             )
-            # GAME LOOOOOOOOOOOOOOOOOOOOP
             while True:
                 key = self.stdscr.getch()
                 if key == curses.KEY_RESIZE:
                     raise Exception("Terminal size error")
                 elif key == ord("\n"):
                     match self.menu.get_selected_index():
-                        # generate
                         case 0:
                             self.running = True
-                            self.rendrer.erase_maze(self.maze,self.duration)
+                            self.rendrer.erase_maze(self.maze, self.duration)
                             self.generator.generate(
                                 self.config.is_perfect,
                                 self.maze,
@@ -174,10 +182,9 @@ class MazeApp:
                                 self.current_color_id,
                                 self.show_hide,
                             )
-                        # generate with steps
                         case 1:
                             self.running = True
-                            self.rendrer.erase_maze(self.maze,self.duration)
+                            self.rendrer.erase_maze(self.maze, self.duration)
                             self.generator.generate(
                                 self.config.is_perfect,
                                 self.maze,
@@ -220,7 +227,6 @@ class MazeApp:
                                 self.current_color_id,
                                 self.show_hide,
                             )
-                        # play
                         case 2:
                             if not self.running:
                                 continue
@@ -256,7 +262,7 @@ class MazeApp:
                                 elif player_key == curses.KEY_UP:
 
                                     player.move(
-                                        PlayerDirection.UP,
+                                        PlayerDirection.up,
                                         self.maze.get_cells()
                                     )
                                     self.rendrer.render_player(player,
@@ -264,7 +270,7 @@ class MazeApp:
 
                                 elif player_key == curses.KEY_DOWN:
                                     player.move(
-                                        PlayerDirection.DOWN,
+                                        PlayerDirection.down,
                                         self.maze.get_cells()
                                     )
                                     self.rendrer.render_player(player,
@@ -272,7 +278,7 @@ class MazeApp:
 
                                 elif player_key == curses.KEY_LEFT:
                                     player.move(
-                                        PlayerDirection.LEFT,
+                                        PlayerDirection.left,
                                         self.maze.get_cells()
                                     )
                                     self.rendrer.render_player(player,
@@ -280,7 +286,7 @@ class MazeApp:
 
                                 elif player_key == curses.KEY_RIGHT:
                                     player.move(
-                                        PlayerDirection.RIGHT,
+                                        PlayerDirection.right,
                                         self.maze.get_cells()
                                     )
                                     self.rendrer.render_player(player,
@@ -298,7 +304,6 @@ class MazeApp:
                                 self.show_hide,
                             )
 
-                        # show/hide
                         case 3:
                             if not self.running:
                                 continue
@@ -310,7 +315,6 @@ class MazeApp:
                                 self.show_hide,
                             )
 
-                        # change color
                         case 4:
                             old_color = self.current_color_id
                             while self.current_color_id == old_color:
@@ -324,7 +328,6 @@ class MazeApp:
                                 self.show_hide,
                             )
 
-                        # Exit
                         case 5:
                             self.__dispose_curses()
                             exit()
@@ -352,43 +355,43 @@ class MazeApp:
         visualization. Configures the curses library for interactive input and
         custom color support.
         """
-        self.stdscr = curses.initscr()  # Start curses
-        self.stdscr.keypad(True)  # Enable arrow keys
-        curses.noecho()  # Don't print keys pressed to screen
-        curses.cbreak()  # React to keys instantly (no Enter needed)
-        curses.curs_set(0)  # hide curses
+        self.stdscr = curses.initscr()
+        self.stdscr.keypad(True)
+        curses.noecho()
+        curses.cbreak()
+        curses.curs_set(0)
         curses.start_color()
         curses.use_default_colors()
 
-        curses.init_color(20, 200, 800, 1000)  # Sky Blue
-        curses.init_color(21, 950, 950, 1000)  # Pure Ice White
-        curses.init_color(22, 500, 950, 1000)  # Bright Teal
-        curses.init_color(23, 700, 850, 1000)  # Periwinkle
-        curses.init_color(24, 1000, 500, 600)  # Pastel Watermelon
+        curses.init_color(20, 200, 800, 1000)
+        curses.init_color(21, 950, 950, 1000)
+        curses.init_color(22, 500, 950, 1000)
+        curses.init_color(23, 700, 850, 1000)
+        curses.init_color(24, 1000, 500, 600)
 
-        curses.init_color(25, 1000, 850, 600)  # Creamy Peach
-        curses.init_color(26, 1000, 400, 400)  # Bright Coral
-        curses.init_color(27, 1000, 950, 200)  # Laser Yellow
-        curses.init_color(28, 1000, 600, 800)  # Bright Orchid
-        curses.init_color(29, 1000, 300, 0)  # Burning Orange
+        curses.init_color(25, 1000, 850, 600)
+        curses.init_color(26, 1000, 400, 400)
+        curses.init_color(27, 1000, 950, 200)
+        curses.init_color(28, 1000, 600, 800)
+        curses.init_color(29, 1000, 300, 0)
 
-        curses.init_color(30, 1000, 1000, 1000)  # Full White
-        curses.init_color(31, 800, 850, 900)  # Bright Silver
-        curses.init_color(32, 400, 600, 1000)  # Tech Blue
-        curses.init_color(33, 1000, 400, 0)  # Safety Orange
-        curses.init_color(34, 1000, 100, 300)  # Neon Red
+        curses.init_color(30, 1000, 1000, 1000)
+        curses.init_color(31, 800, 850, 900)
+        curses.init_color(32, 400, 600, 1000)
+        curses.init_color(33, 1000, 400, 0)
+        curses.init_color(34, 1000, 100, 300)
 
-        curses.init_color(35, 400, 1000, 200)  # Spring Green
-        curses.init_color(36, 0, 1000, 600)  # Turquoise Green
-        curses.init_color(37, 700, 1000, 700)  # Seafoam Mint
-        curses.init_color(38, 600, 1000, 0)  # Bright Chartreuse
-        curses.init_color(39, 900, 1000, 300)  # Lemon Lime
+        curses.init_color(35, 400, 1000, 200)
+        curses.init_color(36, 0, 1000, 600)
+        curses.init_color(37, 700, 1000, 700)
+        curses.init_color(38, 600, 1000, 0)
+        curses.init_color(39, 900, 1000, 300)
 
-        curses.init_color(40, 0, 960, 1000)  # Electric Cyan
-        curses.init_color(41, 1000, 200, 600)  # Bright Hot Pink
-        curses.init_color(42, 800, 650, 1000)  # Vivid Lavender
-        curses.init_color(43, 1000, 600, 200)  # Sunset Orange
-        curses.init_color(44, 700, 300, 1000)  # Bright Violet
+        curses.init_color(40, 0, 960, 1000)
+        curses.init_color(41, 1000, 200, 600)
+        curses.init_color(42, 800, 650, 1000)
+        curses.init_color(43, 1000, 600, 200)
+        curses.init_color(44, 700, 300, 1000)
 
         for i in range(25):
             curses.init_pair(i + 1, 20 + i, -1)
@@ -402,4 +405,4 @@ class MazeApp:
         self.stdscr.keypad(False)
         curses.nocbreak()
         curses.echo()
-        curses.endwin()  # Close the window and return to normal terminal
+        curses.endwin()

@@ -2,7 +2,7 @@
 
 ---
 
-# 🌀 A-Maze-ing
+# A-Maze-ing
 
 A terminal-based interactive maze generator and solver built in Python. The application generates mazes using **Recursive Backtracking**, solves them with **Dijkstra's algorithm**, and renders them in the terminal using the `curses` library — complete with color themes, an interactive player mode, and a hidden **"42" signature** embedded in every maze.
 
@@ -42,16 +42,16 @@ The project includes:
 
 | Feature | Description |
 |---|---|
-| 🔀 Maze Generation | Recursive Backtracking (perfect maze) |
-| 🔓 Imperfect Mode | Randomly removes ~10% of walls to create loops |
-| 🔍 Pathfinding | Dijkstra's algorithm highlights the shortest solution |
-| 🎨 Color Themes | 25 randomizable color palettes for the display |
-| 🕹️ Player Mode | Navigate the maze yourself using arrow keys |
-| 👁️ Show/Hide Solution | Toggle the solution path on/off |
-| 💾 Save to File | Exports maze + solution in hex format to a `.txt` file |
-| 🔢 "42" Easter Egg | A pixel-art "42" is protected and embedded in every maze |
-| 📏 Step-by-Step Mode | Watch the maze build itself wall by wall |
-| 🌱 Seed Support | Reproducible mazes via optional seed in config |
+| Maze Generation | Recursive Backtracking (perfect maze) |
+| Imperfect Mode | Randomly removes ~10% of walls to create loops |
+| Pathfinding | Dijkstra's algorithm highlights the shortest solution |
+| Color Themes | 25 randomizable color palettes for the display |
+| Player Mode | Navigate the maze yourself using arrow keys |
+| Show/Hide Solution | Toggle the solution path on/off |
+| Save to File | Exports maze + solution in hex format to a `.txt` file |
+| "42" Easter Egg | A pixel-art "42" is protected and embedded in every maze |
+| Step-by-Step Mode | Watch the maze build itself wall by wall |
+| Seed Support | Reproducible mazes via optional seed in config |
 
 ---
 
@@ -114,6 +114,8 @@ make clean   # Remove __pycache__, build artifacts, and maze.txt
 make lint    # Run flake8 and mypy for static analysis
 make build   # Package the project for distribution
 make help    # Show all available commands
+make debug    # run in debug mode 
+
 ```
 
 ---
@@ -141,8 +143,8 @@ PERFECT=True
 | `HEIGHT` | Integer | ✅ | Number of rows in the maze. **Minimum: 7** |
 | `ENTRY` | `x,y` | ✅ | Entry point coordinates (0-indexed). Must be inside the grid and not equal to `EXIT` |
 | `EXIT` | `x,y` | ✅ | Exit point coordinates (0-indexed). Must be inside the grid and not equal to `ENTRY` |
-| `OUTPUT_FILE` | String | ❌ | Path to save the generated maze. Defaults to `maze.txt` |
-| `PERFECT` | Boolean | ❌ | `True` = perfect maze (no loops). `False` = imperfect maze (random wall removals). Defaults to `True` |
+| `OUTPUT_FILE` | String | ✅ | Path to save the generated maze. Defaults to `maze.txt` |
+| `PERFECT` | Boolean | ✅ | `True` = perfect maze (no loops). `False` = imperfect maze (random wall removals). Defaults to `True` |
 | `SEED` | String | ❌ | Optional seed for reproducible maze generation. Omit for a random maze each run |
 
 ### Validation Rules
@@ -228,45 +230,35 @@ A single hexadecimal number representing the solution path. The grid is flattene
 
 ---
 
-## Project Structure
 
-```
-.
-├── a_maze_ing.py        # Entry point — instantiates and runs MazeApp
-├── maze_app.py          # Main application controller (curses loop, menu, events)
-├── maze_generator.py    # Core logic: maze generation, pathfinding, rendering helpers
-├── maze.py              # Maze and MazeConfig data structures
-├── cell.py              # Cell class and CellState enum
-├── element.py           # Element class (visual tile with position and shape)
-├── menu.py              # Menu and MenuSection classes for the TUI sidebar
-├── player.py            # Player class and movement logic
-├── file_manager.py      # Standalone maze serialization utilities
-├── config.txt           # Sample configuration file
-├── maze.txt             # Generated maze output (created at runtime)
-└── Makefile             # Build, run, lint, and clean commands
-```
-
----
 
 ## Reusable Components
 
 Several parts of this codebase are designed to be modular and reusable outside of this project:
 
-**`MazeConfig` (`maze.py`)**
-A self-contained configuration parser. It reads any `KEY=VALUE` text file and validates maze parameters. It can be reused in any project that needs configurable grid-based parameters by simply calling `config.parse("myfile.txt")`.
-
 **`MazeGenerator` (`maze_generator.py`)**
 The generator is decoupled from the renderer and the application controller. It operates purely on `Maze` and `Cell` data structures. You can use `MazeGenerator.generate()` to generate a grid and `MazeGenerator.__dijkstra()` to solve it in any Python project — no `curses` dependency required for the logic itself.
 
-**`file_manager.py`**
-The `save_maze()` and `_encode_path_mask()` functions are standalone utilities. They take a grid of `Cell` objects and write a compact hex representation to any file path. These can be imported and used independently in other maze-related tools or exporters.
 
-**`Cell` and `Element` (`cell.py`, `element.py`)**
-These are pure data classes with no dependencies on the display layer. `Cell` represents the logical state of a maze tile (open walls + state enum), and `Element` represents a visual character at a screen position. Both are reusable in any grid-based game or renderer.
 
-**`Menu` (`menu.py`)**
-A generic TUI menu component built on top of `Element`. It supports any number of sections, keyboard navigation (up/down with wraparound), and selection toggling. It can be adapted for any `curses`-based terminal application.
+### - Simple Usage
+```
+import mazegen
 
+maze_gen = mazegen.MazeGenerator(height=15, width=20)
+
+cells = maze_gen.generate(
+    make_perfect=True,
+    entry_pos=(0, 0),
+    exit_pos=(14, 19)
+    )
+
+print(cells) # to print the maze cells
+
+for cell in cells:
+    if cell.state == mazegen.CellState.PATH:
+        print(f"({cell.y}, {cell.x})", end=", ") # to print the maze solution
+```
 ---
 
 ## Team & Project Management

@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import app.maze_app
 
 if __name__ == "__main__":

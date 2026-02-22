@@ -60,14 +60,14 @@ class MenuSection:
         using the appropriate tile graphics
         and positions them based on the section's offset and dimensions.
         """
-        for column in range(self.height):  # 3 in hight
-            for row in range(self.width):  # 22 in width
+        for column in range(self.height):
+            for row in range(self.width):
                 if column == 0 and row == 0:
                     self.elements.append(
                         Element(
                             column + self.v_shift,
                             row + self.h_shift,
-                            Tile.LEFT_TOP.value,
+                            Tile.left_top.value,
                         )
                     )
                 elif column == 0 and row == self.width - 1:
@@ -75,7 +75,7 @@ class MenuSection:
                         Element(
                             column + self.v_shift,
                             row + self.h_shift,
-                            Tile.RIGHT_TOP.value,
+                            Tile.right_top.value,
                         )
                     )
                 elif column == self.height - 1 and row == 0:
@@ -83,7 +83,7 @@ class MenuSection:
                         Element(
                             column + self.v_shift,
                             row + self.h_shift,
-                            Tile.LEFT_BOTTOM.value,
+                            Tile.left_bottom.value,
                         )
                     )
                 elif column == self.height - 1 and row == self.width - 1:
@@ -91,7 +91,7 @@ class MenuSection:
                         Element(
                             column + self.v_shift,
                             row + self.h_shift,
-                            Tile.RIGHT_BOTTOM.value,
+                            Tile.right_bottom.value,
                         )
                     )
                 elif column == 0 or column == self.height - 1:
@@ -99,7 +99,7 @@ class MenuSection:
                         Element(
                             column + self.v_shift,
                             row + self.h_shift,
-                            Tile.HORIZONTAL.value,
+                            Tile.horizontal.value,
                         )
                     )
                 elif row == 0 or row == self.width - 1:
@@ -107,7 +107,7 @@ class MenuSection:
                         Element(
                             column + self.v_shift,
                             row + self.h_shift,
-                            Tile.VERTICAL.value,
+                            Tile.vertical.value,
                         )
                     )
 

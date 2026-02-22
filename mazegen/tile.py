@@ -19,34 +19,34 @@ class Tile(Enum):
         SHORT_DOWN: Space for down direction.
         SHORT_LEFT: Space for left direction.
         SHORT_RIGHT: Space for right direction.
-        BLOCK: Solid block character.
+        block: Solid block character.
         ENTER: Entry point marker.
         EXIT: Exit point marker.
         PATH: Solution path marker.
         SPACE: Empty space character.
     """
 
-    VERTICAL = "║"
-    HORIZONTAL = "═"
+    vertical = "║"
+    horizontal = "═"
 
-    LEFT_TOP = "╔"
-    RIGHT_TOP = "╗"
-    LEFT_BOTTOM = "╚"
-    RIGHT_BOTTOM = "╝"
+    left_top = "╔"
+    right_top = "╗"
+    left_bottom = "╚"
+    right_bottom = "╝"
 
-    CENTER = "╬"
-    T_DOWN = "╦"
-    T_UP = "╩"
-    T_RIGHT = "╠"
-    T_LEFT = "╣"
+    center = "╬"
+    t_down = "╦"
+    t_up = "╩"
+    t_right = "╠"
+    t_left = "╣"
 
-    SHORT_UP = " "
-    SHORT_DOWN = " "
-    SHORT_LEFT = " "
-    SHORT_RIGHT = " "
+    short_up = " "
+    short_down = " "
+    short_left = " "
+    short_right = " "
 
-    BLOCK = "█"
-    ENTER = "E"
-    EXIT = "X"
-    PATH = "*"
-    SPACE = " "
+    block = "█"
+    entry = "E"
+    _exit = "X"
+    path = "*"
+    space = " "

@@ -49,16 +49,16 @@ class Rendrer:
 
             current_attr: int = color_pair(color_id)
             match element.shape:
-                case Tile.BLOCK.value:
+                case Tile.block.value:
                     current_attr = color_pair(color_id + 1)
-                case Tile.PATH.value:
+                case Tile.path.value:
                     current_attr = color_pair(color_id + 2)
-                case Tile.ENTER.value:
+                case Tile.entry.value:
                     current_attr = color_pair(color_id + 3)
-                case Tile.EXIT.value:
+                case Tile._exit.value:
                     current_attr = color_pair(color_id + 4)
 
-            if show_path and element.shape == Tile.PATH.value:
+            if show_path and element.shape == Tile.path.value:
                 self.stdscr.addch(
                     element.y,
                     element.x,
@@ -71,15 +71,15 @@ class Rendrer:
                     element.x,
                     (
                         element.shape
-                        if element.shape != Tile.PATH.value
-                        else Tile.SPACE.value
+                        if element.shape != Tile.path.value
+                        else Tile.space.value
                     ),
                     current_attr,
                 )
             self.stdscr.refresh()
             sleep(duration)
 
-    def erase_maze(self, maze: Maze, duration: float ) -> None:
+    def erase_maze(self, maze: Maze, duration: float) -> None:
         """Clear the maze from the terminal by rendering spaces over it.
 
         Args:
@@ -112,7 +112,7 @@ class Rendrer:
             self.stdscr.addch(
                 last_pos[0] * 2 + 1 + player.y_shift,
                 last_pos[1] * 2 + 1 + player.x_shift,
-                Tile.SPACE.value,
+                Tile.space.value,
             )
 
         self.stdscr.addch(
@@ -132,7 +132,7 @@ class Rendrer:
                 self.stdscr.addch(
                     element.y,
                     element.x,
-                    element.shape if section.selected else Tile.SPACE.value,
+                    element.shape if section.selected else Tile.space.value,
                 )
 
             self.stdscr.addstr(

@@ -12,11 +12,11 @@ class CellState(Enum):
         EXIT: The exit point from the maze.
     """
 
-    REGULAR = 0
-    PATH = 1
-    FT = 2
-    ENTRY = 3
-    EXIT = 4
+    regular = 0
+    path = 1
+    ft = 2
+    entry = 3
+    _exit = 4
 
 
 class Cell:
@@ -30,7 +30,7 @@ class Cell:
         down (bool): Whether there is a wall on the bottom side of the cell.
         left (bool): Whether there is a wall on the left side of the cell.
         state (CellState):
-        The current state of the cell (default: CellState.PATH).
+        The current state of the cell (default: CellState.path).
     Args:
         x (int): The row coordinate of the cell.
         y (int): The column coordinate of the cell.
@@ -39,7 +39,7 @@ class Cell:
         down (bool): Indicates if the cell has a wall pointing downward.
         left (bool): Indicates if the cell has a wall pointing left.
         state (CellState):
-        The initial state of the cell. Defaults to CellState.PATH.
+        The initial state of the cell. Defaults to CellState.path.
     """
 
     def __init__(
@@ -50,7 +50,7 @@ class Cell:
         right: bool,
         down: bool,
         left: bool,
-        state: CellState = CellState.PATH,
+        state: CellState = CellState.path,
     ) -> None:
         """Initialize a Cell with position, walls, and state.
         Args:
@@ -61,7 +61,7 @@ class Cell:
             down (bool): Whether there is a wall on the bottom side.
             left (bool): Whether there is a wall on the left side.
             state (CellState): The state of the cell.
-            Defaults to CellState.PATH.
+            Defaults to CellState.path.
         """
         self.y: int = y
         self.x: int = x

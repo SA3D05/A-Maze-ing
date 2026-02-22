@@ -12,10 +12,10 @@ class PlayerDirection(Enum):
         LEFT: Move left (value: 2).
         RIGHT: Move right (value: 3).
     """
-    UP = 0
-    DOWN = 1
-    LEFT = 2
-    RIGHT = 3
+    up = 0
+    down = 1
+    left = 2
+    right = 3
 
 
 class Player:
@@ -56,17 +56,17 @@ class Player:
         """
         for cell in maze_cells:
             if (cell.y, cell.x) == (self.y, self.x):
-                if not cell.left and direction == PlayerDirection.LEFT:
+                if not cell.left and direction == PlayerDirection.left:
                     self.x -= 1
                     return
-                elif not cell.right and direction == PlayerDirection.RIGHT:
+                elif not cell.right and direction == PlayerDirection.right:
                     self.x += 1
                     return
 
-                elif not cell.up and direction == PlayerDirection.UP:
+                elif not cell.up and direction == PlayerDirection.up:
                     self.y -= 1
                     return
 
-                elif not cell.down and direction == PlayerDirection.DOWN:
+                elif not cell.down and direction == PlayerDirection.down:
                     self.y += 1
                     return
