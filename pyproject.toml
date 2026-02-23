@@ -1,12 +1,14 @@
 [project]
 name = "mazegen"
-version = "0.1.0"
-description = ""
-requires-python = "^3.10"
+version = "1.0.0"
+description = "Maze generator and solver"
+requires-python = ">=3.10"
 
 
 [tool.poetry]
-packages = [{ include = "mazegen" },{ include = "app" }]
+packages = [
+    { include = "mazegen" }
+]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

@@ -1,3 +1,5 @@
+import sys
+
 from .element import Element
 from .cell import Cell
 
@@ -59,17 +61,30 @@ class MazeConfig:
         with open(filename, "r") as f:
             for line in f:
                 line = line.strip()
+
                 if line.startswith("#"):
                     continue
                 if not line:
-                    raise Exception("Empty line")
+                    continue
+
                 if "=" not in line:
                     raise Exception(
                         f"Invalid format in '{line}' "
                         "expected KEY=VALUE"
                         )
+
                 key, value = line.split("=", 1)
-                raw_config[key.strip().upper()] = value.strip()
+                key = key.strip().upper()
+                value = value.strip()
+
+                if value == "":
+                    raise Exception(f"Empty value in field '{key}'")
+
+                if raw_config.get(key):
+                    raise Exception(f"Duplicate field '{key}'")
+
+                raw_config[key] = value
+
         if not all(
             key in [
                     "HEIGHT",
@@ -80,7 +95,8 @@ class MazeConfig:
                     "OUTPUT_FILE",
                     "SEED",
                     ] for key in raw_config):
-            raise Exception("Unknown key")
+            raise Exception("Unknown field")
+
         if not all(
             key in raw_config for key in [
                 "HEIGHT",
@@ -90,24 +106,34 @@ class MazeConfig:
                 "PERFECT",
                 "OUTPUT_FILE",
                 ]):
-            raise Exception("Missing mendatory key")
-
-        for k, v in raw_config.items():
-            if v == "":
-                raise Exception(f"Empty value for key '{k}'")
+            raise Exception("Missing mendatory field")
 
         self.width = int(raw_config.get("WIDTH", -1))
         self.height = int(raw_config.get("HEIGHT", -1))
 
+        if self.height <= 0:
+            raise Exception("Invalide 'HEIGHT' value")
+
+        if self.width <= 0:
+            raise Exception("Invalide 'WIDTH' value")
+
         if self.width < 9 or self.height < 7:
-            raise Exception("Min maze size is 9, 7")
+            raise Exception(
+                "Maze dimensions too small "
+                "minimum allowed is 7x9"
+                )
         if self.width > 50 or self.height > 50:
-            raise Exception("Max maze size is 50, 50")
+            raise Exception(
+                "Maze dimensions too large "
+                "Maximum allowed is 50x50"
+            )
 
         perf_val = raw_config.get("PERFECT", "").upper()
-        if perf_val not in ["TRUE", "FALSE"]:
-            raise Exception("'PERFECT' value must be True or False")
 
+        if perf_val not in ["TRUE", "FALSE"]:
+            raise Exception(
+                "'PERFECT' value must be 'false' or 'true'"
+                )
         self.is_perfect = perf_val == "TRUE"
 
         raw_seed = raw_config.get("SEED")
@@ -133,6 +159,10 @@ class MazeConfig:
         if self.entry == self.exit:
             raise ValueError(
                 "'ENTRY' and 'EXIT' cannot be the same coordinates"
+            )
+        if self.output == sys.argv[1]:
+            raise ValueError(
+                "Output file cannot be the same as the configuration file"
             )
 
     def _get_safe_coords(
