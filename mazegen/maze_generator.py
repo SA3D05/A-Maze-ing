@@ -117,33 +117,33 @@ class MazeGenerator:
             f.write(f"{entry[0]},{entry[1]}\n")
             f.write(f"{exit_pt[0]},{exit_pt[1]}\n\n")
 
-            path_hex = self.__encode_path_mask(height, width, path_coords)
+            path_hex = self.__encode_path_to_directions(path_coords)
             f.write(f"{path_hex}\n")
 
-    def __encode_path_mask(
-        self, height: int, width: int, path_coords: List[Tuple[int, int]]
-    ) -> str:
-        """Encode the solution path as a hexadecimal mask.
+    def __encode_path_to_directions(
+            self, path_coords: List[Tuple[int, int]]) -> str:
+        if not path_coords or len(path_coords) < 2:
+            return ""
 
-        Creates a binary string where each bit represents whether
-        a cell is part of the solution path,
-        then converts to hexadecimal.
+        directions = []
 
-        Args:
-            width (int): Width of the maze in cells.
-            height (int): Height of the maze in cells.
-            path_coords (List[Tuple[int, int]]):
-            List of cells in the solution path.
+        for i in range(len(path_coords) - 1):
+            (curr_x, curr_y) = path_coords[i]
+            (next_x, next_y) = path_coords[i + 1]
 
-        Returns:
-            str: Hexadecimal representation of the path mask.
-        """
-        bit_string = ""
-        path_set = set(path_coords)
-        for y in range(height):
-            for x in range(width):
-                bit_string += "1" if (x, y) in path_set else "0"
-        return f"{int(bit_string, 2):X}" if bit_string else "0"
+            dx = next_x - curr_x
+            dy = next_y - curr_y
+
+            if dx == 1:
+                directions.append("S")
+            elif dx == -1:
+                directions.append("N")
+            elif dy == 1:
+                directions.append("E")
+            elif dy == -1:
+                directions.append("W")
+
+        return "".join(directions)
 
     def __get_neighbors(
         self, y: int, x: int, visited: Set[Tuple[int, int]]

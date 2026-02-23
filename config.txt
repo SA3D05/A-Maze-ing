@@ -1,7 +1,7 @@
 WIDTH=10
 height=10
 ENTRY=0,1
-EXIT=0,1
+EXIT=0,4
 OUTPUT_FILE=maze
 PERFECT=true
-seed=0
+# seed=
